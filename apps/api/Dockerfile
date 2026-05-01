@@ -17,3 +17,4 @@ ENV NODE_ENV=production
 EXPOSE 3000
 # Doğrudan çalıştırma izni olmasa bile sh ile giriş (OCI "permission denied" önlemi)
 ENTRYPOINT ["/bin/sh", "/app/docker-entrypoint.sh"]
+CMD ["node", "dist/src/main.js"]
