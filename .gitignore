@@ -1,0 +1,8 @@
+.env
+.env.local
+*.log
+.DS_Store
+
+# Firebase service account (asla commitlenmesin)
+rahatla-secret.json
+*-secret.json

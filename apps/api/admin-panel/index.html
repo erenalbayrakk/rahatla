@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rahatla Yönetim</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --sidebar: #0f172a;
+      --sidebar-hover: #1e293b;
+      --sidebar-active: #334155;
+      --sidebar-text: #94a3b8;
+      --sidebar-text-active: #f8fafc;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #059669;
+      --danger: #dc2626;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 40px -12px rgba(15, 23, 42, 0.18);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    body { margin: 0; min-height: 100vh; }
+
+    /* ——— Login ——— */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%, rgba(37, 99, 235, 0.15), transparent),
+        linear-gradient(180deg, #e8eef5 0%, var(--bg) 45%);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+    .login-card .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .login-card .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .login-card h1 { margin: 0; font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; }
+    .login-card .subtitle { color: var(--text-muted); font-size: 0.875rem; margin: 6px 0 24px; }
+    .login-card label { display: block; margin: 14px 0 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+    .login-card input {
+      width: 100%; padding: 11px 14px; border-radius: 8px;
+      border: 1px solid var(--border); font-size: 15px;
+    }
+    .login-card input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    .login-card button.primary {
+      width: 100%; margin-top: 22px; padding: 12px; border: none; border-radius: 8px;
+      background: var(--accent); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
+    }
+    .login-card button.primary:hover { background: var(--accent-hover); }
+    .login-hint { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+    .login-hint code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+    /* ——— App shell ——— */
+    .app { display: none; min-height: 100vh; }
+    .app.visible { display: grid; grid-template-columns: 260px 1fr; }
+    @media (max-width: 900px) {
+      .app.visible { grid-template-columns: 1fr; }
+      .sidebar { position: sticky; top: 0; z-index: 20; flex-direction: row; flex-wrap: wrap; padding: 12px 16px; gap: 8px; }
+      .sidebar .nav { display: flex; flex-wrap: wrap; width: 100%; gap: 4px; }
+      .sidebar .nav button { flex: 1 1 auto; min-width: calc(50% - 4px); }
+      .sidebar-footer { display: none; }
+    }
+
+    .sidebar {
+      background: var(--sidebar);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 12px;
+      min-height: 100vh;
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 12px;
+    }
+    .sidebar-brand .mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 14px;
+    }
+    .sidebar-brand .titles { line-height: 1.2; }
+    .sidebar-brand strong { color: var(--sidebar-text-active); font-size: 15px; display: block; }
+    .sidebar-brand small { font-size: 11px; opacity: 0.75; }
+
+    .nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav button {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; text-align: left;
+      padding: 10px 14px; border: none; border-radius: 8px;
+      background: transparent; color: var(--sidebar-text);
+      font-size: 14px; cursor: pointer; font-family: inherit;
+    }
+    .nav button:hover { background: var(--sidebar-hover); color: var(--sidebar-text-active); }
+    .nav button.active { background: var(--sidebar-active); color: var(--sidebar-text-active); font-weight: 500; }
+    .nav button .ic { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.85; }
+    .nav button .ic svg { display: block; width: 20px; height: 20px; }
+
+    .sidebar-footer {
+      padding: 12px; margin-top: auto;
+      font-size: 11px; color: rgba(148, 163, 184, 0.7);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .sidebar-footer code { word-break: break-all; font-size: 10px; }
+
+    .main { display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+      padding: 16px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h2 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+    .topbar-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .badge {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 4px 10px; border-radius: 6px;
+      background: #ecfdf5; color: var(--success);
+    }
+    .topbar .api-pill {
+      font-size: 12px; color: var(--text-muted);
+      max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      font-family: inherit; cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+    }
+    .btn:hover { background: var(--bg); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-ghost { border-color: transparent; background: transparent; color: var(--text-muted); }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-danger { color: var(--danger); border-color: #fecaca; }
+    .btn-danger:hover { background: #fef2f2; }
+
+    .content { padding: 24px 28px 48px; flex: 1; }
+    .panel { display: none; animation: fade 0.2s ease; }
+    .panel.active { display: block; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+    .page-desc { color: var(--text-muted); font-size: 14px; margin: 0 0 20px; max-width: 720px; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .stat-card .label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .stat-card .value { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; margin-top: 6px; }
+    .stat-card .hint { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #fafbfc 0%, var(--surface) 100%);
+    }
+    .card-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
+    .card-body { padding: 20px; }
+    .card-body.compact { padding: 0; }
+
+    label.form-label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    input, textarea, select {
+      width: 100%; max-width: 100%; padding: 10px 12px; border-radius: 8px;
+      border: 1px solid var(--border); font-family: inherit; font-size: 14px;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .form-row { margin-bottom: 14px; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: min(520px, 65vh);
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    table.data {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    table.data thead th {
+      position: sticky; top: 0; z-index: 1;
+      background: #f8fafc;
+      text-align: left; padding: 10px 14px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    table.data tbody td {
+      padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top;
+    }
+    table.data tbody tr:hover { background: #f8fafc; }
+    table.data tbody tr:last-child td { border-bottom: none; }
+    table.data code {
+      font-size: 11px; word-break: break-all; display: block; max-width: 200px;
+      background: #f1f5f9; padding: 4px 6px; border-radius: 4px; cursor: pointer;
+    }
+    table.data code:hover { background: #e2e8f0; }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    }
+    .pill-open { background: #d1fae5; color: #047857; }
+    .pill-closed { background: #fee2e2; color: #b91c1c; }
+    .pill-role { background: #e0e7ff; color: #3730a3; }
+
+    pre.json {
+      margin: 0; padding: 16px; font-size: 12px; line-height: 1.45;
+      background: #0f172a; color: #e2e8f0; overflow: auto; max-height: 320px;
+      border-radius: 0 0 var(--radius) var(--radius); font-family: ui-monospace, monospace;
+    }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      padding: 12px 18px; border-radius: 10px; background: var(--text); color: #fff;
+      font-size: 14px; box-shadow: var(--shadow-lg); display: none; max-width: 360px;
+    }
+    .toast.show { display: block; animation: slide 0.25s ease; }
+    @keyframes slide { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+    .sess-toolbar select { width: auto; max-width: 220px; display: inline-block; }
+    .admin-chat-msgs {
+      height: 360px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .admin-chat-msg { max-width: 88%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; word-break: break-word; }
+    .admin-chat-msg.mine { align-self: flex-end; background: var(--accent); color: #fff; }
+    .admin-chat-msg.theirs { align-self: flex-start; background: #fff; border: 1px solid var(--border); }
+    .admin-chat-msg.system { align-self: center; font-style: italic; color: var(--text-muted); font-size: 12px; background: transparent; border: none; max-width: 100%; text-align: center; }
+    .admin-chat-msg .meta { font-size: 10px; opacity: 0.8; margin-top: 4px; }
+    .admin-chat-msg.mine .meta { color: rgba(255,255,255,0.85); }
+    .admin-chat-input-row { display: flex; gap: 8px; align-items: stretch; }
+    .admin-chat-input-row input { flex: 1; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .modal.open { display: flex; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      cursor: pointer;
+    }
+    .modal-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 460px;
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      margin: 32px auto 48px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+    }
+  </style>
+</head>
+<body>
+  <div id="login-section" class="login-screen">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <h1>Rahatla Yönetim</h1>
+        </div>
+      </div>
+      <p class="subtitle">Yönetici hesabıyla giriş yapın. Oturum tarayıcıda saklanır.</p>
+      <label for="email">E-posta</label>
+      <input type="email" id="email" autocomplete="username" placeholder="admin@ornek.com" />
+      <label for="password">Şifre</label>
+      <input type="password" id="password" autocomplete="current-password" />
+      <button type="button" class="primary" id="btn-login">Giriş yap</button>
+      <p class="login-hint">
+        Veritabanında <code>users.role = 'admin'</code> atanmış bir kullanıcı gerekir.
+        Panel adresi: <code>/admin-panel/</code>
+      </p>
+    </div>
+  </div>
+
+  <div id="app-section" class="app">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="mark">R</div>
+        <div class="titles">
+          <strong>Rahatla</strong>
+          <small>Yönetim konsolu</small>
+        </div>
+      </div>
+      <nav class="nav" id="side-nav">
+        <button type="button" class="active" data-panel="dashboard" data-title="Genel bakış">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M4 13h6V4H4v9zm10 7h6V11h-6v9zM4 20h6v-5H4v5zm10-16v5h6V4h-6z"/></svg></span>
+          Genel bakış
+        </button>
+        <button type="button" data-panel="users" data-title="Kullanıcılar">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          Kullanıcılar
+        </button>
+        <button type="button" data-panel="online-listeners" data-title="Çevrimiçi dinleyenler">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg></span>
+          Çevrimiçi
+        </button>
+        <button type="button" data-panel="discover-users" data-title="Keşfet kullanıcıları">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6"/><path d="M8 11h6"/></svg></span>
+          Keşfet kullanıcıları
+        </button>
+        <button type="button" data-panel="recognition" data-title="Dinleyen takdiri">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+          Dinleyen takdiri
+        </button>
+        <button type="button" data-panel="rooms" data-title="Grup odaları">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          Grup odaları
+        </button>
+        <button type="button" data-panel="sessions" data-title="Birebir sohbetler">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></span>
+          Birebir sohbetler
+        </button>
+        <button type="button" data-panel="session-gifts" data-title="Hediye logları">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+          Hediye logları
+        </button>
+        <button type="button" data-panel="mail" data-title="E-posta (SMTP)">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg></span>
+          E-posta (SMTP)
+        </button>
+        <button type="button" data-panel="app-settings" data-title="Keşif · yanıt hızı">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg></span>
+          Keşif · yanıt hızı
+        </button>
+        <button type="button" data-panel="moderation" data-title="Moderasyon">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          Moderasyon
+        </button>
+        <button type="button" data-panel="push-test" data-title="Test push (FCM)">
+          <span class="ic" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A8 8 0 0 0 20 9a8 8 0 0 0-5-7.3V1h-2v.7A8 8 0 0 0 3 9a8 8 0 0 0 5 7.3V19H6v2h12v-2h-2v-2.7A8.6 8.6 0 0 0 20 9v-.2l1.4 1.4H20"/><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg></span>
+          Test push
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        API: <code id="sidebar-api">—</code>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <h2 id="page-title">Genel bakış</h2>
+        <div class="topbar-meta">
+          <span class="badge">Canlı</span>
+          <span class="api-pill" id="topbar-api" title=""></span>
+          <button type="button" class="btn btn-ghost" id="btn-refresh-all">Tümünü yenile</button>
+          <button type="button" class="btn btn-danger" id="btn-logout">Çıkış</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div id="panel-dashboard" class="panel active" data-panel="dashboard">
+          <p class="page-desc">Sistem özeti. Veriler giriş sonrası otomatik yüklenir; kartları güncellemek için yenile kullanın.</p>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="label">Kayıtlı kullanıcı</div>
+              <div class="value" id="stat-users">—</div>
+              <div class="hint">Şifre / hash listelenmez</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Grup odası</div>
+              <div class="value" id="stat-rooms">—</div>
+              <div class="hint">Toplam oda sayısı</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Açık oda</div>
+              <div class="value" id="stat-open-rooms">—</div>
+              <div class="hint">Durumu “open” olanlar</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Çevrimiçi dinleyen</div>
+              <div class="value" id="stat-online-listeners">—</div>
+              <div class="hint">Şu an is_online = true</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Hızlı işlemler</h3></div>
+            <div class="card-body">
+              <div class="toolbar">
+                <button type="button" class="btn btn-primary" id="dash-goto-users">Kullanıcı listesine git</button>
+                <button type="button" class="btn" id="dash-goto-online">Çevrimiçi dinleyenler</button>
+                <button type="button" class="btn btn-primary" id="dash-goto-discover-users">Keşfet kullanıcıları</button>
+                <button type="button" class="btn btn-primary" id="dash-goto-recognition">Dinleyen takdiri</button>
+                <button type="button" class="btn btn-primary" id="dash-goto-rooms">Yeni grup odası</button>
+                <button type="button" class="btn btn-primary" id="dash-goto-sessions">Birebir sohbetler</button>
+                <button type="button" class="btn btn-primary" id="dash-goto-mail">E-posta (SMTP)</button>
+                <button type="button" class="btn btn-primary" id="dash-goto-selfies">Selfie onay kuyruğu</button>
+                <button type="button" class="btn" id="dash-goto-mod">Mesaj moderasyonu</button>
+                <button type="button" class="btn" id="dash-goto-push">Test push (FCM)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-users" class="panel" data-panel="users">
+          <p class="page-desc">
+            <strong>Yeni hesap:</strong> Aşağıdaki <strong>«Yeni kullanıcı»</strong> kartından oluşturun (tablonun hemen üstü).
+            Katılımcı eklerken kullanıcı ID sütunundan UUID kopyalayabilirsiniz. Satırdaki <strong>Düzenle</strong> ile güncelleme yapılır.
+          </p>
+          <div class="card" id="admin-new-user-card">
+            <div class="card-header"><h3>Yeni kullanıcı</h3></div>
+            <div class="card-body">
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="new-user-email">E-posta</label>
+                  <input id="new-user-email" type="email" autocomplete="off" placeholder="ornek@mail.com" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="new-user-password">Şifre (en az 8 karakter)</label>
+                  <input id="new-user-password" type="password" autocomplete="new-password" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="new-user-display">Görünen ad (isteğe bağlı)</label>
+                <input id="new-user-display" placeholder="Boş bırakılırsa e-posta öneki kullanılır" />
+              </div>
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="new-user-role">Hesap türü</label>
+                  <select id="new-user-role">
+                    <option value="normal_user">Yardım isteyen (normal_user)</option>
+                    <option value="listener_applicant">Yardım eden · başvuru</option>
+                    <option value="approved_listener">Onaylı yardım eden</option>
+                    <option value="admin">Yönetim (admin)</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="new-user-verified" style="margin-top:22px;display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;color:var(--text)">
+                    <input type="checkbox" id="new-user-verified" />
+                    E-postayı doğrulanmış say
+                  </label>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-create-user">Kullanıcı oluştur</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Kullanıcı dizini</h3>
+              <div class="toolbar" style="margin:0">
+                <button type="button" class="btn btn-primary" id="btn-goto-new-user">Yeni kullanıcı</button>
+                <button type="button" class="btn" id="btn-refresh-users">Yenile</button>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="users-table">
+                  <thead>
+                    <tr>
+                      <th>Görünen ad</th>
+                      <th>Cinsiyet</th>
+                      <th>E-posta</th>
+                      <th>Hesap türü</th>
+                      <th>Durum</th>
+                      <th>E-posta doğrulaması</th>
+                      <th>Dinleyen başvurusu</th>
+                      <th>Dinleyen profili</th>
+                      <th>Takdir ifadeleri</th>
+                      <th>Kayıt</th>
+                      <th>İşlem</th>
+                      <th>Kullanıcı ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Selfie onay bekleyenler</h3>
+              <div class="toolbar" style="margin:0">
+                <button type="button" class="btn btn-primary" id="btn-refresh-verify-selfies">Yenile</button>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="verify-selfies-table">
+                  <thead>
+                    <tr>
+                      <th>Görünen ad</th>
+                      <th>E-posta</th>
+                      <th>Gönderim</th>
+                      <th>Selfie</th>
+                      <th>İşlem</th>
+                      <th>Kullanıcı ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="verify-selfies-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-online-listeners" class="panel" data-panel="online-listeners">
+          <p class="page-desc">
+            <strong>listener_profile.is_online = true</strong> olan dinleyen hesapları. Socket ile
+            <code>/realtime</code> bağlantısı açıkken (mod: <em>auto</em>) veya yönetimden
+            <em>zorla çevrimiçi</em> verildiğinde bu listede görünür. Yardım isteyen
+            (normal) kullanıcılar için uygulama açık/kapalı bilgisi burada tutulmaz.
+          </p>
+          <div class="card">
+            <div class="card-header">
+              <h3>Şu an çevrimiçi gösterilen dinleyenler</h3>
+              <div class="toolbar" style="margin:0">
+                <button type="button" class="btn btn-primary" id="btn-refresh-online-listeners">Yenile</button>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="online-listeners-table">
+                  <thead>
+                    <tr>
+                      <th>Durum</th>
+                      <th>Görünen ad</th>
+                      <th>E-posta</th>
+                      <th>Hesap türü</th>
+                      <th>Müsait</th>
+                      <th>Presence</th>
+                      <th>Puan</th>
+                      <th>Profil güncellendi</th>
+                      <th>Kullanıcı ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="online-listeners-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-discover-users" class="panel" data-panel="discover-users">
+          <p class="page-desc">
+            Her kullanıcı için <strong>discover_listings</strong> kaydı tutulur. Mobil uygulamada «Keşfette görün» kapalı olanlar,
+            dinleyen keşfet listesi ve aramasında gösterilmez (onaylı dinleyen / başvuran filtresine uygun olsalar bile).
+          </p>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="label">Keşfet kaydı (toplam)</div>
+              <div class="value" id="stat-disc-total">—</div>
+              <div class="hint">Tablodaki satır sayısı</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Keşfette görünür</div>
+              <div class="value" id="stat-disc-visible">—</div>
+              <div class="hint">Listede yer alabilir</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Keşfetten gizli</div>
+              <div class="value" id="stat-disc-hidden">—</div>
+              <div class="hint">Kullanıcı tercihi: görünme</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Keşfet dizini</h3>
+              <div class="toolbar" style="margin:0">
+                <button type="button" class="btn" id="btn-refresh-discover-users">Yenile</button>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="discover-users-table">
+                  <thead>
+                    <tr>
+                      <th>Keşfette görünür</th>
+                      <th>Görünen ad</th>
+                      <th>E-posta</th>
+                      <th>Hesap türü</th>
+                      <th>Hesap durumu</th>
+                      <th>E-posta doğrulaması</th>
+                      <th>Keşfet kaydı güncellendi</th>
+                      <th>Kullanıcı ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="discover-users-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-recognition" class="panel" data-panel="recognition">
+          <p class="page-desc">Onaylı dinleyenlere kısa takdir ifadeleri verin — puan veya emoji değil; örn. <strong>İyi dinleyici</strong>, <strong>Sadık</strong>, <strong>Sakin ton</strong>. Bu metinler dinleyen listesinde ve sohbet ekranında görünür.</p>
+          <div class="card">
+            <div class="card-header"><h3>Çevrimiçi göstergesi (socket / admin)</h3></div>
+            <div class="card-body">
+              <p class="page-desc" style="margin-top:0">
+                <strong>auto:</strong> mobil socket bağlıyken yeşil (dinleyen uygulamayı açık tutar).
+                <strong>Zorla çevrimiçi / çevrimdışı:</strong> listeyi sabitler; socket bu modda <code>isOnline</code> yazmaz.
+              </p>
+              <div class="form-row">
+                <label class="form-label" for="pres-user-id">Dinleyen kullanıcı UUID</label>
+                <input id="pres-user-id" placeholder="Kullanıcı tablosundan" />
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="pres-override">Mod</label>
+                <select id="pres-override">
+                  <option value="auto">auto (socket yönetsin)</option>
+                  <option value="force_online">Zorla çevrimiçi (yeşil)</option>
+                  <option value="force_offline">Zorla çevrimdışı (gri)</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-save-presence">Kaydet</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Dinleyene takdir yaz</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <label class="form-label" for="rec-user-id">Dinleyen kullanıcı ID (UUID)</label>
+                <input id="rec-user-id" placeholder="Kullanıcı tablosundan kopyala — yalnızca approved_listener" />
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="rec-labels">İfadeler (satır başına bir tane, en fazla 12, satır başına en fazla 48 karakter)</label>
+                <textarea id="rec-labels" rows="7" placeholder="İyi dinleyici&#10;Sadık&#10;Sakin ton"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-save-rec">Kaydet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-rooms" class="panel" data-panel="rooms">
+          <p class="page-desc">Grup destek odalarını oluşturun, listesini görün ve katılımcı ekleyin veya odayı kapatın. Mobil kullanıcılar «Katılma isteği» gönderebilir; aşağıdaki tablodan onaylayınca otomatik <strong>member</strong> olarak eklenirler.</p>
+
+          <div class="card">
+            <div class="card-header"><h3>Yeni grup odası</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <label class="form-label" for="room-title">Başlık</label>
+                <input id="room-title" placeholder="Örn: Akşam destek grubu" />
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="room-desc">Açıklama (isteğe bağlı)</label>
+                <textarea id="room-desc" rows="2" placeholder="Kısa açıklama"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-create-room">Oda oluştur</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Odalar</h3>
+              <button type="button" class="btn btn-primary" id="btn-refresh-rooms">Yenile</button>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="rooms-table">
+                  <thead>
+                    <tr>
+                      <th>Başlık</th>
+                      <th>Durum</th>
+                      <th>Katılımcı</th>
+                      <th>Mesaj</th>
+                      <th>Oluşturulma</th>
+                      <th>Oda ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rooms-tbody"></tbody>
+                </table>
+              </div>
+              <details style="margin: 0; border-top: 1px solid var(--border);">
+                <summary style="padding: 12px 20px; cursor: pointer; font-size: 13px; color: var(--text-muted); font-weight: 500;">Ham JSON</summary>
+                <pre class="json" id="rooms-json">[]</pre>
+              </details>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Bekleyen katılma istekleri</h3>
+              <button type="button" class="btn btn-primary" id="btn-refresh-join-requests">Yenile</button>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="join-requests-table">
+                  <thead>
+                    <tr>
+                      <th>Oda</th>
+                      <th>Kullanıcı</th>
+                      <th>Not</th>
+                      <th>Tarih</th>
+                      <th>İstek ID</th>
+                      <th>İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody id="join-requests-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Katılımcı ekle</h3></div>
+            <div class="card-body">
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="part-room-id">Oda ID (UUID)</label>
+                  <input id="part-room-id" placeholder="uuid" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="part-user-id">Kullanıcı ID (UUID)</label>
+                  <input id="part-user-id" placeholder="uuid" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="part-role">Rol</label>
+                <select id="part-role">
+                  <option value="member">member (kullanıcı)</option>
+                  <option value="listener">listener (onaylı dinleyen)</option>
+                  <option value="moderator">moderator (admin hesabı)</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-add-participant">Katılımcı ekle</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Oda kapat</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <label class="form-label" for="close-room-id">Oda UUID</label>
+                <input id="close-room-id" placeholder="Oda UUID" />
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-danger" id="btn-close-room">Odayı kapat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-sessions" class="panel" data-panel="sessions">
+          <p class="page-desc">Birebir oturumlar. <strong>Sohbete katıl</strong> ile moderatör olarak odaya eklersin; aşağıdan mesajlaşırsın (Socket.IO <code>/realtime</code>). Kullanıcılar mobil uygulamada aynı sohbeti görür.</p>
+          <div class="toolbar sess-toolbar" style="margin-bottom:16px">
+            <label class="form-label" style="margin:0;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap">
+              Durum filtresi
+              <select id="sess-filter-status">
+                <option value="">Tümü (son 150)</option>
+                <option value="active" selected>active</option>
+                <option value="matched">matched</option>
+                <option value="pending">pending</option>
+                <option value="ended">ended</option>
+                <option value="cancelled">cancelled</option>
+                <option value="reported">reported</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn-primary" id="btn-refresh-sessions">Yenile</button>
+            <button type="button" class="btn" id="btn-chat-disconnect" style="display:none">Sohbeti kapat</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Oturumlar</h3></div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="sessions-table">
+                  <thead>
+                    <tr>
+                      <th>Durum</th>
+                      <th>Yardım isteyen</th>
+                      <th>Dinleyen</th>
+                      <th>Mesaj</th>
+                      <th>Oluşturulma</th>
+                      <th>Oturum</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="sessions-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="card" id="admin-chat-card" style="display:none">
+            <div class="card-header">
+              <h3>Yönetici sohbeti</h3>
+              <span class="api-pill" id="chat-session-label" title=""></span>
+            </div>
+            <div class="card-body">
+              <div id="chat-messages" class="admin-chat-msgs" aria-live="polite"></div>
+              <div class="admin-chat-input-row">
+                <input type="text" id="chat-input" placeholder="Mesaj yaz… Enter veya Gönder" autocomplete="off" />
+                <button type="button" class="btn btn-primary" id="btn-chat-send">Gönder</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-session-gifts" class="panel" data-panel="session-gifts">
+          <p class="page-desc">
+            Birebir sohbette gönderilen sanal hediyeler (<code>session_gifts</code>). Tutarlar katalog birimiyle uyumludur (ör. kuruş / jeton).
+            <code>GET /admin/session-gifts</code>
+          </p>
+          <div class="card">
+            <div class="card-header">
+              <h3>Hediye kayıtları</h3>
+              <div class="toolbar" style="margin:0;flex-wrap:wrap;gap:10px;align-items:center">
+                <label class="form-label" style="margin:0;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                  Son
+                  <input type="number" id="gifts-limit" value="200" min="1" max="500" style="width:64px;padding:6px 8px;border:1px solid var(--border);border-radius:8px" />
+                  kayıt
+                </label>
+                <button type="button" class="btn btn-primary" id="btn-refresh-gifts">Yenile</button>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="gifts-table">
+                  <thead>
+                    <tr>
+                      <th>Zaman</th>
+                      <th>Hediye</th>
+                      <th>Ödenen</th>
+                      <th>Alıcı net</th>
+                      <th>Platform</th>
+                      <th>Gönderen</th>
+                      <th>Alıcı</th>
+                      <th>Oturum ID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gifts-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-mail" class="panel" data-panel="mail">
+          <p class="page-desc">
+            <strong>Ortam + veritabanı birlikte:</strong> Burada kaydettiğin değerler <code>.env</code> üzerindekileri <em>üzerine yazar</em>.
+            <strong>SMTP şifresi</strong> güvenlik için yalnızca sunucu ortamında (<code>SMTP_PASS</code>) tutulur; panelde görünmez ve kaydedilmez.
+            AWS SES için örnek host: <code>email-smtp.&lt;bölge&gt;.amazonaws.com</code> (port genelde 587 veya 465).
+          </p>
+          <div class="card">
+            <div class="card-header">
+              <h3>SMTP ve gönderici</h3>
+              <div class="toolbar" style="margin:0">
+                <button type="button" class="btn" id="btn-mail-reload">Yenile</button>
+                <button type="button" class="btn btn-primary" id="btn-mail-save">Kaydet</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="page-desc" style="margin-top:0">
+                <strong>Etkin değerler</strong> sütunu gönderimde kullanılan birleşik ayardır.
+                <span id="mail-pw-hint"></span>
+              </p>
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="mail-smtp-host">SMTP sunucusu (host)</label>
+                  <input id="mail-smtp-host" placeholder="Boş = .env SMTP_HOST" autocomplete="off" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="mail-smtp-port">Port</label>
+                  <input id="mail-smtp-port" type="number" min="1" max="65535" placeholder="Boş = .env veya 587" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="mail-smtp-secure">TLS / SSL</label>
+                <select id="mail-smtp-secure">
+                  <option value="inherit">Ortam / port kuralı (çoğu kurulum için uygun)</option>
+                  <option value="on">secure: true (genelde port 465)</option>
+                  <option value="off">secure: false (genelde port 587, STARTTLS)</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="mail-smtp-user">SMTP kullanıcı adı</label>
+                <input id="mail-smtp-user" placeholder="Boş = .env SMTP_USER (SES SMTP kullanıcısı)" autocomplete="off" />
+              </div>
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="mail-from">Gönderen (From)</label>
+                  <input id="mail-from" placeholder="Rahatla &lt;no-reply@alanadin.com&gt;" autocomplete="off" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="mail-app-public">Uygulama / API kök URL (doğrulama linki)</label>
+                  <input id="mail-app-public" placeholder="https://api.sirketin.com" autocomplete="off" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="mail-provider-docs">Yardım bağlantısı (örn. AWS SES kılavuzu)</label>
+                <input id="mail-provider-docs" type="url" placeholder="https://docs.aws.amazon.com/ses/latest/dg/send-email-smtp.html" autocomplete="off" />
+              </div>
+              <div class="form-actions">
+                <a class="btn" id="mail-open-docs" href="#" target="_blank" rel="noopener" style="display:none">Yardım linkini aç</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-app-settings" class="panel" data-panel="app-settings">
+          <p class="page-desc">
+            Dinleyen keşif listesindeki <strong>spark / swift / warm / easy</strong> rozetleri, son mesajlara göre hesaplanan
+            <strong>medyan yanıt gecikmesi</strong> ile karşılaştırılır. Burada <strong>üst sınırları saniye</strong> olarak girersin;
+            medyan ≤ spark → spark, ≤ swift → swift, ≤ warm → warm, üzeri → easy.
+          </p>
+          <div class="card">
+            <div class="card-header">
+              <h3>Yanıt hızı eşikleri (saniye)</h3>
+              <div class="toolbar" style="margin:0">
+                <button type="button" class="btn" id="btn-app-settings-reload">Yenile</button>
+                <button type="button" class="btn btn-primary" id="btn-app-settings-save">Kaydet</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="page-desc" style="margin-top:0">
+                <strong>Varsayılan fabrika değerleri:</strong> spark ≤ <code id="app-default-spark">300</code>s (5 dk),
+                swift ≤ <code id="app-default-swift">1800</code>s (30 dk), warm ≤ <code id="app-default-warm">21600</code>s (6 saat).
+                Kayıt yoksa API bu sabitleri kullanır. Kayıt sonrası <code>spark &lt; swift &lt; warm</code> zorunlu.
+              </p>
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="app-reply-spark">Spark üst sınırı (saniye)</label>
+                  <input id="app-reply-spark" type="number" min="60" max="1209600" step="1" />
+                  <small class="hint" id="app-reply-spark-hint"></small>
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="app-reply-swift">Swift üst sınırı (saniye)</label>
+                  <input id="app-reply-swift" type="number" min="60" max="1209600" step="1" />
+                  <small class="hint" id="app-reply-swift-hint"></small>
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="app-reply-warm">Warm üst sınırı (saniye)</label>
+                <input id="app-reply-warm" type="number" min="60" max="1209600" step="1" />
+                <small class="hint" id="app-reply-warm-hint"></small>
+              </div>
+              <p class="page-desc" style="margin-bottom:0">
+                Son güncelleme: <span id="app-settings-updated">—</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-moderation" class="panel" data-panel="moderation">
+          <p class="page-desc">Oda mesaj geçmişi ve moderasyon (gizle / göster).</p>
+
+          <div class="card">
+            <div class="card-header"><h3>Mesaj geçmişi</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <label class="form-label" for="msg-room-id">Oda UUID</label>
+                <input id="msg-room-id" placeholder="Oda UUID" />
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-load-messages">Mesajları yükle</button>
+              </div>
+              <pre class="json" id="messages-out" style="margin-top: 16px; border-radius: var(--radius);">[]</pre>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Mesaj moderasyonu</h3></div>
+            <div class="card-body">
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="mod-room-id">Oda ID</label>
+                  <input id="mod-room-id" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="mod-msg-id">Mesaj ID</label>
+                  <input id="mod-msg-id" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-danger" id="btn-mod-hide">Gizle (hidden=true)</button>
+                <button type="button" class="btn" id="btn-mod-show">Göster (hidden=false)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-push-test" class="panel" data-panel="push-test">
+          <p class="page-desc">
+            Aşağıdaki <strong>Kullanıcı dizini</strong>nden alıcıları işaretleyin; başlık ve gövdeyi doldurup
+            <strong>Seçililere gönder</strong> deyin. Kayıtlı FCM token yoksa mobilde bir kez giriş gerekir
+            (<code>POST /notifications/fcm-token</code>). Gelişmiş: ham token / API için kartların altındaki bölümler.
+            <code>FIREBASE_SERVICE_ACCOUNT_*</code> gerekir.
+          </p>
+          <div class="card">
+            <div class="card-header">
+              <h3>Kullanıcı dizini — push alıcıları</h3>
+              <div class="toolbar" style="margin:0;flex-wrap:wrap;gap:8px;align-items:center">
+                <input
+                  type="search"
+                  id="push-dir-search"
+                  placeholder="Listede süz (görünen ad / e-posta)…"
+                  style="min-width:200px;max-width:280px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px"
+                />
+                <button type="button" class="btn" id="btn-refresh-push-users">Yenile</button>
+                <span class="form-label" style="margin:0;font-size:12px;color:var(--text-muted)" id="push-dir-selection-hint">0 seçili</span>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="table-wrap">
+                <table class="data" id="push-users-table">
+                  <thead>
+                    <tr>
+                      <th style="width:40px" title="Tümü">
+                        <input type="checkbox" id="push-dir-select-all" aria-label="Tüm satırları seç" />
+                      </th>
+                      <th>Görünen ad</th>
+                      <th>Cinsiyet</th>
+                      <th>E-posta</th>
+                      <th>Hesap türü</th>
+                      <th>Durum</th>
+                      <th>E-posta doğrulaması</th>
+                      <th>Dinleyen başvurusu</th>
+                      <th>Dinleyen profili</th>
+                      <th>Takdir ifadeleri</th>
+                    </tr>
+                  </thead>
+                  <tbody id="push-users-tbody">
+                    <tr>
+                      <td colspan="10">
+                        <div class="empty-state">Kullanıcı listesi yükleniyor…</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card-body" style="border-top:1px solid var(--border)">
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="push-filter-title">Başlık</label>
+                  <input id="push-filter-title" value="Rahatla" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="push-filter-body">Gövde</label>
+                  <input id="push-filter-body" value="Bildirim" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="push-filter-data-json">Data JSON (isteğe bağlı)</label>
+                <textarea id="push-filter-data-json" rows="4" placeholder="{}">{
+  "type": "admin_broadcast",
+  "source": "admin_panel"
+}</textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-send-selected-push">Seçililere gönder</button>
+              </div>
+              <pre class="json" id="push-filter-result" style="margin-top: 16px; display: none; border-radius: var(--radius)"></pre>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="card-header"><h3>İsteğe bağlı: sunucu filtreleri (e-posta / rol / UUID)</h3></div>
+            <div class="card-body" style="padding-top:0">
+              <p class="page-desc" style="margin-top:0">Dizin yerine toplu kural gerekirse kullanın; dizi aynı <code>POST /admin/push/by-filter</code> uç noktasına gider. Normal kullanım için yukarıdaki işaret yeterlidir.</p>
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="push-adv-email">E-posta içerir</label>
+                  <input id="push-adv-email" type="text" placeholder="ör. @gmail" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="push-adv-role">Hesap türü</label>
+                  <select id="push-adv-role">
+                    <option value="">(Filtreleme)</option>
+                    <option value="normal_user">Yardım isteyen</option>
+                    <option value="listener_applicant">Yardım eden · başvuru</option>
+                    <option value="approved_listener">Onaylı yardım eden</option>
+                    <option value="admin">Yönetim</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="push-adv-status">Hesap durumu</label>
+                  <select id="push-adv-status">
+                    <option value="">(Filtreleme)</option>
+                    <option value="active">active</option>
+                    <option value="suspended">suspended</option>
+                    <option value="deleted">deleted</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="push-adv-user-ids" style="display:block">Kullanıcı ID’leri (virgül / satır)</label>
+                  <textarea id="push-adv-user-ids" rows="2" placeholder="Opsiyonel UUID listesi"></textarea>
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;color:var(--text)">
+                  <input type="checkbox" id="push-adv-only-online" />
+                  Yalnızca <code>listener is_online = true</code>
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn" id="btn-send-adv-filter-push">Filtreyle gönder (sunucu)</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Ham FCM token ile test (tek cihaz)</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <label class="form-label" for="push-fcm-token">FCM token</label>
+                <textarea id="push-fcm-token" rows="3" placeholder="Mobil cihazdan kopyalanan token"></textarea>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-row">
+                  <label class="form-label" for="push-title">Başlık</label>
+                  <input id="push-title" value="Rahatla test bildirimi" />
+                </div>
+                <div class="form-row">
+                  <label class="form-label" for="push-body">Gövde</label>
+                  <input id="push-body" value="Merhaba! Bu bir admin test push mesajıdır." />
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label" for="push-data-json">Data JSON (isteğe bağlı)</label>
+                <textarea id="push-data-json" rows="5" placeholder='{"type":"test_push"}'>{
+  "type": "test_push",
+  "source": "admin_panel"
+}</textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btn-send-test-push">Gönder</button>
+              </div>
+              <pre class="json" id="push-test-result" style="margin-top: 16px; display: none; border-radius: var(--radius)"></pre>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Son 10 test push</h3></div>
+            <div class="card-body compact">
+              <div id="push-history-empty" class="empty-state" style="padding:20px">Henüz test push kaydı yok.</div>
+              <div class="table-wrap">
+                <table class="data" id="push-history-table" style="display:none">
+                  <thead>
+                    <tr>
+                      <th>Zaman</th>
+                      <th>Durum</th>
+                      <th>Başlık</th>
+                      <th>Mesaj</th>
+                      <th>Token</th>
+                      <th>Detay</th>
+                    </tr>
+                  </thead>
+                  <tbody id="push-history-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <div id="user-edit-modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal tabindex="-1"></div>
+    <div class="modal-card" role="dialog" aria-labelledby="user-edit-title">
+      <div class="modal-header">
+        <h3 id="user-edit-title">Kullanıcıyı düzenle</h3>
+        <button type="button" class="btn btn-ghost" data-close-modal aria-label="Kapat">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-user-id" />
+        <div class="form-row">
+          <label class="form-label" for="edit-user-email">E-posta</label>
+          <input id="edit-user-email" type="email" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="edit-user-display">Görünen ad</label>
+          <input id="edit-user-display" />
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label" for="edit-user-role">Hesap türü</label>
+            <select id="edit-user-role">
+              <option value="normal_user">Yardım isteyen</option>
+              <option value="listener_applicant">Yardım eden · başvuru</option>
+              <option value="approved_listener">Onaylı yardım eden</option>
+              <option value="admin">Yönetim</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="form-label" for="edit-user-status">Hesap durumu</label>
+            <select id="edit-user-status">
+              <option value="active">active</option>
+              <option value="suspended">suspended</option>
+              <option value="deleted">deleted</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="edit-user-password">Yeni şifre (isteğe bağlı, min. 8)</label>
+          <input id="edit-user-password" type="password" autocomplete="new-password" placeholder="Boş bırak = değiştirme" />
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="edit-user-verified" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;color:var(--text)">
+            <input type="checkbox" id="edit-user-verified" />
+            E-posta doğrulanmış
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" data-close-modal>İptal</button>
+        <button type="button" class="btn btn-primary" id="btn-save-user-edit">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script>
+    const api = () => localStorage.getItem('api_base') || window.location.origin;
+    const token = () => localStorage.getItem('access_token');
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 3200);
+    }
+
+    function setApiLabels() {
+      const u = api();
+      document.getElementById('sidebar-api').textContent = u;
+      const top = document.getElementById('topbar-api');
+      top.textContent = u;
+      top.title = u;
+    }
+
+    function showApp() {
+      document.getElementById('login-section').style.display = 'none';
+      const app = document.getElementById('app-section');
+      app.classList.add('visible');
+      setApiLabels();
+      if (typeof renderPushHistory === 'function') renderPushHistory();
+    }
+
+    function setPanel(id) {
+      document.querySelectorAll('#side-nav button').forEach((b) => {
+        b.classList.toggle('active', b.dataset.panel === id);
+      });
+      document.querySelectorAll('.content .panel').forEach((p) => {
+        p.classList.toggle('active', p.id === 'panel-' + id);
+      });
+      const btn = document.querySelector('#side-nav button[data-panel="' + id + '"]');
+      if (btn) document.getElementById('page-title').textContent = btn.dataset.title || '';
+      if (id === 'mail') void refreshMailSettings();
+      if (id === 'app-settings') void refreshAppSettings();
+      if (id === 'push-test') {
+        if (!window.__cacheUsers || !Array.isArray(window.__cacheUsers)) {
+          void refreshUsers().catch(() => {});
+        } else if (typeof syncPushUserDirectoryFromUsers === 'function') {
+          syncPushUserDirectoryFromUsers(window.__cacheUsers);
+        }
+      }
+    }
+
+    document.getElementById('side-nav').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-panel]');
+      if (b) setPanel(b.dataset.panel);
+    });
+
+    document.getElementById('dash-goto-users').onclick = () => setPanel('users');
+    const dashOnline = document.getElementById('dash-goto-online');
+    if (dashOnline) dashOnline.onclick = () => setPanel('online-listeners');
+    const dashDiscover = document.getElementById('dash-goto-discover-users');
+    if (dashDiscover) dashDiscover.onclick = () => setPanel('discover-users');
+    document.getElementById('dash-goto-recognition').onclick = () => setPanel('recognition');
+    document.getElementById('dash-goto-rooms').onclick = () => setPanel('rooms');
+    document.getElementById('dash-goto-sessions').onclick = () => setPanel('sessions');
+    document.getElementById('dash-goto-mail').onclick = () => setPanel('mail');
+    document.getElementById('dash-goto-selfies').onclick = () => {
+      setPanel('users');
+      setTimeout(() => {
+        const el = document.getElementById('verify-selfies-table');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    };
+    document.getElementById('dash-goto-mod').onclick = () => setPanel('moderation');
+    const dashPush = document.getElementById('dash-goto-push');
+    if (dashPush) dashPush.onclick = () => setPanel('push-test');
+
+    const PUSH_HISTORY_KEY = 'admin_push_test_history_v1';
+    function readPushHistory() {
+      try {
+        const raw = localStorage.getItem(PUSH_HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    function writePushHistory(list) {
+      localStorage.setItem(PUSH_HISTORY_KEY, JSON.stringify(list.slice(0, 10)));
+    }
+    function renderPushHistory() {
+      const list = readPushHistory();
+      const tbody = document.getElementById('push-history-tbody');
+      const table = document.getElementById('push-history-table');
+      const empty = document.getElementById('push-history-empty');
+      tbody.innerHTML = '';
+      if (!list.length) {
+        table.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+      table.style.display = 'table';
+      empty.style.display = 'none';
+      for (const row of list) {
+        const tr = document.createElement('tr');
+        const detail = typeof row.detail === 'string' ? row.detail : JSON.stringify(row.detail);
+        tr.innerHTML =
+          '<td style="white-space:nowrap">' + esc(row.at || '—') + '</td>' +
+          '<td>' + (row.ok ? '<span class="pill pill-open">başarılı</span>' : '<span class="pill pill-closed">hata</span>') + '</td>' +
+          '<td>' + esc(row.title || '—') + '</td>' +
+          '<td style="max-width:260px">' + esc(row.body || '—') + '</td>' +
+          '<td><code>' + esc(row.tokenMasked || '—') + '</code></td>' +
+          '<td style="max-width:280px;font-size:12px">' + esc(detail || '—') + '</td>';
+        tbody.appendChild(tr);
+      }
+    }
+    function maskToken(v) {
+      if (!v) return '—';
+      if (v.length <= 18) return v;
+      return v.slice(0, 8) + '…' + v.slice(-8);
+    }
+    function pushHistoryAdd(entry) {
+      const list = readPushHistory();
+      list.unshift(entry);
+      writePushHistory(list);
+      renderPushHistory();
+    }
+
+    function parseUuidList(raw) {
+      if (!raw || !String(raw).trim()) return undefined;
+      const parts = String(raw)
+        .split(/[\s,;]+/g)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const uuids = [];
+      const re =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      for (const p of parts) {
+        if (re.test(p)) uuids.push(p.toLowerCase());
+      }
+      return uuids.length ? uuids : undefined;
+    }
+
+    function collectPushFormPayload() {
+      const title = document.getElementById('push-filter-title').value.trim();
+      const body = document.getElementById('push-filter-body').value.trim();
+      const dataRaw = document.getElementById('push-filter-data-json').value.trim();
+      if (!title || !body) {
+        return { error: 'Başlık ve gövde gerekli' };
+      }
+      const payload = { title, body };
+      if (dataRaw) {
+        let data;
+        try {
+          data = JSON.parse(dataRaw);
+        } catch {
+          return { error: 'Data JSON geçersiz' };
+        }
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+          return { error: 'Data JSON bir nesne olmalı' };
+        }
+        payload.data = data;
+      }
+      return { payload };
+    }
+
+    document.getElementById('btn-send-selected-push').onclick = async () => {
+      const userIds = Array.from(
+        document.querySelectorAll('#push-users-tbody input.push-user-cb:checked'),
+      ).map((el) => el.getAttribute('data-user-id'));
+      const built = collectPushFormPayload();
+      if (built.error) {
+        alert(built.error);
+        return;
+      }
+      if (userIds.length === 0) {
+        alert('En az bir kullanıcı seçin (tablodaki onay kutuları)');
+        return;
+      }
+      if (userIds.length > 500) {
+        alert('En fazla 500 kullanıcı seçin');
+        return;
+      }
+      const pre = document.getElementById('push-filter-result');
+      const payload = { ...built.payload, userIds };
+      try {
+        const res = await req('/admin/push/by-filter', {
+          method: 'POST',
+          body: payload,
+        });
+        pre.style.display = 'block';
+        pre.textContent = JSON.stringify(res, null, 2);
+        toast('Push gönderildi');
+        const summ =
+          (res.matchedUserCount != null ? res.matchedUserCount : '?') +
+          ' kullanıcı, ' +
+          (res.tokenCount != null ? res.tokenCount : '?') +
+          ' token';
+        pushHistoryAdd({
+          at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          ok: true,
+          title: built.payload.title + ' (dizin)',
+          body: summ,
+          tokenMasked: '—',
+          detail: res,
+        });
+      } catch (e) {
+        pre.style.display = 'block';
+        pre.textContent = e.message || String(e);
+        pushHistoryAdd({
+          at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          ok: false,
+          title: built.payload.title + ' (dizin)',
+          body: '—',
+          tokenMasked: '—',
+          detail: e.message || String(e),
+        });
+        alert(e.message || e);
+      }
+    };
+
+    document.getElementById('btn-send-adv-filter-push').onclick = async () => {
+      const title = document.getElementById('push-filter-title').value.trim();
+      const body = document.getElementById('push-filter-body').value.trim();
+      const dataRaw = document.getElementById('push-filter-data-json').value.trim();
+      if (!title || !body) {
+        alert('Başlık ve gövde gerekli (üstteki form)');
+        return;
+      }
+      const emailContains = document.getElementById('push-adv-email').value.trim();
+      const role = document.getElementById('push-adv-role').value;
+      const status = document.getElementById('push-adv-status').value;
+      const onlyOnline = document.getElementById('push-adv-only-online').checked;
+      const userIds = parseUuidList(document.getElementById('push-adv-user-ids').value);
+      const hasFilter =
+        (userIds && userIds.length > 0) ||
+        emailContains.length > 0 ||
+        role ||
+        status ||
+        onlyOnline;
+      if (!hasFilter) {
+        alert(
+          'En az bir sunucu filtresi: e-posta parçası, rol, durum, çevrimiçi veya UUID listesi',
+        );
+        return;
+      }
+      const payload = { title, body };
+      if (userIds && userIds.length) payload.userIds = userIds;
+      if (emailContains) payload.emailContains = emailContains;
+      if (role) payload.role = role;
+      if (status) payload.status = status;
+      if (onlyOnline) payload.onlyOnlineListeners = true;
+      if (dataRaw) {
+        let data;
+        try {
+          data = JSON.parse(dataRaw);
+        } catch {
+          alert('Data JSON geçersiz');
+          return;
+        }
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+          alert('Data JSON bir nesne olmalı');
+          return;
+        }
+        payload.data = data;
+      }
+      const pre = document.getElementById('push-filter-result');
+      try {
+        const res = await req('/admin/push/by-filter', {
+          method: 'POST',
+          body: payload,
+        });
+        pre.style.display = 'block';
+        pre.textContent = JSON.stringify(res, null, 2);
+        toast('Filtre push tamamlandı');
+        const summ =
+          (res.matchedUserCount != null ? res.matchedUserCount : '?') +
+          ' kullanıcı, ' +
+          (res.tokenCount != null ? res.tokenCount : '?') +
+          ' token';
+        pushHistoryAdd({
+          at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          ok: true,
+          title: title + ' (sunucu filtre)',
+          body: summ,
+          tokenMasked: '—',
+          detail: res,
+        });
+      } catch (e) {
+        pre.style.display = 'block';
+        pre.textContent = e.message || String(e);
+        pushHistoryAdd({
+          at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          ok: false,
+          title: title + ' (sunucu filtre)',
+          body: '—',
+          tokenMasked: '—',
+          detail: e.message || String(e),
+        });
+        alert(e.message || e);
+      }
+    };
+
+    document.getElementById('btn-send-test-push').onclick = async () => {
+      const pushToken = document.getElementById('push-fcm-token').value.trim();
+      const title = document.getElementById('push-title').value.trim();
+      const body = document.getElementById('push-body').value.trim();
+      const dataRaw = document.getElementById('push-data-json').value.trim();
+      if (!pushToken) {
+        alert('FCM token gerekli');
+        return;
+      }
+      if (!title || !body) {
+        alert('Başlık ve gövde gerekli');
+        return;
+      }
+      let data;
+      if (dataRaw) {
+        try {
+          data = JSON.parse(dataRaw);
+        } catch {
+          alert('Data JSON geçersiz');
+          return;
+        }
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+          alert('Data JSON bir nesne olmalı');
+          return;
+        }
+      }
+      const pre = document.getElementById('push-test-result');
+      try {
+        const res = await req('/admin/push/test', {
+          method: 'POST',
+          body: {
+            token: pushToken,
+            title,
+            body,
+            ...(data ? { data } : {}),
+          },
+        });
+        pre.style.display = 'block';
+        pre.textContent = JSON.stringify(res, null, 2);
+        toast('Test push gönderildi');
+        pushHistoryAdd({
+          at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          ok: true,
+          title,
+          body,
+          tokenMasked: maskToken(pushToken),
+          detail: res && res.messageId ? ('messageId: ' + res.messageId) : JSON.stringify(res),
+        });
+      } catch (e) {
+        pre.style.display = 'block';
+        pre.textContent = e.message || String(e);
+        pushHistoryAdd({
+          at: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          ok: false,
+          title,
+          body,
+          tokenMasked: maskToken(pushToken),
+          detail: e.message || String(e),
+        });
+        alert(e.message || e);
+      }
+    };
+
+    async function refreshMailSettings() {
+      try {
+        const data = await req('/admin/mail-settings');
+        const s = data.stored || {};
+        const e = data.effective || {};
+        document.getElementById('mail-smtp-host').value = s.smtpHost || '';
+        document.getElementById('mail-smtp-port').value =
+          s.smtpPort != null ? String(s.smtpPort) : '';
+        document.getElementById('mail-smtp-secure').value = s.smtpSecure || 'inherit';
+        document.getElementById('mail-smtp-user').value = s.smtpUser || '';
+        document.getElementById('mail-from').value = s.mailFrom || '';
+        document.getElementById('mail-app-public').value = s.appPublicApiUrl || '';
+        document.getElementById('mail-provider-docs').value = s.providerDocsUrl || '';
+        const pwOk = e.smtpPasswordConfigured;
+        document.getElementById('mail-pw-hint').innerHTML =
+          '<strong>SMTP şifre:</strong> ' +
+          (pwOk
+            ? '<span style="color:var(--success)">Ortamda tanımlı (SMTP_PASS).</span>'
+            : '<span style="color:var(--danger)">Eksik — SMTP_PASS ortamda yok.</span>');
+        const doc = (s.providerDocsUrl || '').trim();
+        const a = document.getElementById('mail-open-docs');
+        if (doc) {
+          a.href = doc;
+          a.style.display = 'inline-block';
+        } else {
+          a.style.display = 'none';
+          a.removeAttribute('href');
+        }
+      } catch (err) {
+        console.error(err);
+        toast(err.message || String(err));
+      }
+    }
+
+    document.getElementById('btn-mail-reload').onclick = () => refreshMailSettings();
+
+    document.getElementById('btn-mail-save').onclick = async () => {
+      try {
+        const body = {};
+        body.smtpHost = document.getElementById('mail-smtp-host').value.trim();
+        const portRaw = document.getElementById('mail-smtp-port').value.trim();
+        if (portRaw === '') body.smtpPort = null;
+        else body.smtpPort = parseInt(portRaw, 10);
+        body.smtpSecure = document.getElementById('mail-smtp-secure').value;
+        body.smtpUser = document.getElementById('mail-smtp-user').value.trim();
+        body.mailFrom = document.getElementById('mail-from').value.trim();
+        body.appPublicApiUrl = document.getElementById('mail-app-public').value.trim();
+        body.providerDocsUrl = document.getElementById('mail-provider-docs').value.trim();
+        if (
+          body.smtpPort != null &&
+          (Number.isNaN(body.smtpPort) || body.smtpPort < 1 || body.smtpPort > 65535)
+        ) {
+          alert('Port 1–65535 olmalı veya boş bırakın');
+          return;
+        }
+        await req('/admin/mail-settings', { method: 'PATCH', body });
+        toast('E-posta ayarları kaydedildi');
+        await refreshMailSettings();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    function formatDurationSec(sec) {
+      const n = Number(sec);
+      if (!Number.isFinite(n) || n < 0) return '';
+      if (n < 3600) return '≈ ' + Math.round(n / 60) + ' dk';
+      const h = n / 3600;
+      const label = h % 1 === 0 ? String(h) : h.toFixed(1).replace(/\.0$/, '');
+      return '≈ ' + label + ' sa';
+    }
+
+    function updateAppSettingsHints() {
+      ['app-reply-spark', 'app-reply-swift', 'app-reply-warm'].forEach((id) => {
+        const el = document.getElementById(id);
+        const hint = document.getElementById(id + '-hint');
+        if (el && hint) hint.textContent = formatDurationSec(el.value);
+      });
+    }
+
+    async function refreshAppSettings() {
+      try {
+        const data = await req('/admin/app-settings');
+        const d = data.defaults || {};
+        const s = data.stored || {};
+        const spark = s.replySparkMaxSeconds ?? d.replySparkMaxSeconds ?? 300;
+        const swift = s.replySwiftMaxSeconds ?? d.replySwiftMaxSeconds ?? 1800;
+        const warm = s.replyWarmMaxSeconds ?? d.replyWarmMaxSeconds ?? 21600;
+        document.getElementById('app-reply-spark').value = String(spark);
+        document.getElementById('app-reply-swift').value = String(swift);
+        document.getElementById('app-reply-warm').value = String(warm);
+        const ds = d.replySparkMaxSeconds ?? 300;
+        const df = d.replySwiftMaxSeconds ?? 1800;
+        const dw = d.replyWarmMaxSeconds ?? 21600;
+        document.getElementById('app-default-spark').textContent = ds;
+        document.getElementById('app-default-swift').textContent = df;
+        document.getElementById('app-default-warm').textContent = dw;
+        const uEl = document.getElementById('app-settings-updated');
+        if (uEl) {
+          uEl.textContent = s.updatedAt
+            ? s.updatedAt.replace('T', ' ').slice(0, 19) + ' UTC'
+            : 'Henüz kayıt yok (varsayılanlar)';
+        }
+        updateAppSettingsHints();
+      } catch (err) {
+        console.error(err);
+        toast(err.message || String(err));
+      }
+    }
+
+    document.getElementById('btn-app-settings-reload').onclick = () => refreshAppSettings();
+
+    document.getElementById('btn-app-settings-save').onclick = async () => {
+      try {
+        const body = {
+          replySparkMaxSeconds: parseInt(document.getElementById('app-reply-spark').value, 10),
+          replySwiftMaxSeconds: parseInt(document.getElementById('app-reply-swift').value, 10),
+          replyWarmMaxSeconds: parseInt(document.getElementById('app-reply-warm').value, 10),
+        };
+        if (
+          [body.replySparkMaxSeconds, body.replySwiftMaxSeconds, body.replyWarmMaxSeconds].some(
+            (x) => Number.isNaN(x),
+          )
+        ) {
+          alert('Sayıları kontrol et');
+          return;
+        }
+        await req('/admin/app-settings', { method: 'PATCH', body });
+        toast('Yanıt hızı eşikleri kaydedildi');
+        await refreshAppSettings();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    ['app-reply-spark', 'app-reply-swift', 'app-reply-warm'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updateAppSettingsHints);
+    });
+
+    async function req(path, opts = {}) {
+      const headers = { Accept: 'application/json', ...(opts.headers || {}) };
+      if (token()) headers['Authorization'] = 'Bearer ' + token();
+      if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(opts.body);
+      }
+      const r = await fetch(api() + path, { ...opts, headers });
+      const text = await r.text();
+      let data;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      if (!r.ok) throw new Error(typeof data === 'object' && data?.message ? (Array.isArray(data.message) ? data.message.join(', ') : data.message) : r.status + ' ' + text);
+      return data;
+    }
+
+    document.getElementById('btn-login').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      try {
+        const data = await req('/auth/login', { method: 'POST', body: { email, password } });
+        localStorage.setItem('access_token', data.accessToken);
+        showApp();
+        await Promise.all([
+          refreshUsers(),
+          refreshOnlineListeners(),
+          refreshVerifySelfies(),
+          refreshDiscoverUsers(),
+          refreshRooms(),
+          refreshJoinRequests(),
+          refreshSessions(),
+          refreshMailSettings(),
+          refreshAppSettings(),
+        ]);
+        toast('Giriş başarılı');
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    function esc(s) {
+      if (s == null || s === '') return '—';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function accountKindTr(role) {
+      const m = {
+        normal_user: 'Yardım isteyen',
+        listener_applicant: 'Yardım eden · başvuru',
+        approved_listener: 'Onaylı yardım eden',
+        admin: 'Yönetim',
+      };
+      return m[role] || role;
+    }
+
+    window.__cacheUsers = null;
+    window.__cacheRooms = null;
+    window.__cacheOnlineListeners = null;
+
+    function genderTr(g) {
+      if (g == null || g === '') return '—';
+      const m = {
+        female: 'Kadın',
+        male: 'Erkek',
+        non_binary: 'Non-binary',
+        prefer_not_to_say: 'Belirtmek istemiyorum',
+      };
+      return m[g] || String(g);
+    }
+
+    function updateDashboardStats() {
+      const users = window.__cacheUsers;
+      const rooms = window.__cacheRooms;
+      const onlineL = window.__cacheOnlineListeners;
+      const uLen = Array.isArray(users) ? users.length : 0;
+      document.getElementById('stat-users').textContent = Array.isArray(users) ? uLen : '—';
+      const rList = Array.isArray(rooms) ? rooms : [];
+      document.getElementById('stat-rooms').textContent = Array.isArray(rooms) ? rList.length : '—';
+      const open = rList.filter((r) => r.status === 'open').length;
+      document.getElementById('stat-open-rooms').textContent = Array.isArray(rooms) ? open : '—';
+      const oEl = document.getElementById('stat-online-listeners');
+      if (oEl) {
+        oEl.textContent = Array.isArray(onlineL) ? String(onlineL.length) : '—';
+      }
+    }
+
+    function updatePushDirSelectionHint() {
+      const hint = document.getElementById('push-dir-selection-hint');
+      if (!hint) return;
+      const n = document.querySelectorAll(
+        '#push-users-tbody input.push-user-cb:checked',
+      ).length;
+      hint.textContent = n + ' seçili';
+    }
+
+    function syncPushUserDirectoryFromUsers(data) {
+      const tbody = document.getElementById('push-users-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const selAll = document.getElementById('push-dir-select-all');
+      if (selAll) selAll.checked = false;
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="10"><div class="empty-state">Kayıt yok</div></td></tr>';
+        updatePushDirSelectionHint();
+        return;
+      }
+      for (const u of data) {
+        const name = u.profile?.displayName ?? '—';
+        const appSt = u.listenerApplication?.status ?? '—';
+        let lp = '—';
+        if (u.listenerProfile) {
+          const lpv = u.listenerProfile;
+          const avg = lpv.ratingAvg != null ? Number(lpv.ratingAvg).toFixed(2) : '0';
+          const ovr = lpv.presenceOverride || 'auto';
+          lp = `çevrimiçi: ${lpv.isOnline ? 'evet' : 'hayır'}, müsait: ${lpv.isAvailable ? 'evet' : 'hayır'}, mod: ${ovr}, puan: ${avg} (${lpv.ratingCount ?? 0})`;
+        }
+        let rec = '—';
+        const labels =
+          u.listenerProfile && Array.isArray(u.listenerProfile.adminRecognitionLabels)
+            ? u.listenerProfile.adminRecognitionLabels
+            : [];
+        if (labels.length) rec = esc(labels.join(' · '));
+        const searchBlob = (
+          String(name) +
+          ' ' +
+          String(u.email || '') +
+          ' ' +
+          String(accountKindTr(u.role))
+        )
+          .toLowerCase()
+          .replace(/\s+/g, ' ');
+        const tr = document.createElement('tr');
+        tr.className = 'push-user-row';
+        tr.dataset.searchText = searchBlob;
+        tr.innerHTML =
+          '<td><input type="checkbox" class="push-user-cb" data-user-id="' +
+          esc(u.id).replace(/"/g, '&quot;') +
+          '" aria-label="Seç" /></td>' +
+          '<td>' +
+          esc(name) +
+          '</td>' +
+          '<td>' +
+          esc(genderTr(u.gender)) +
+          '</td>' +
+          '<td>' +
+          esc(u.email) +
+          '</td>' +
+          '<td><span class="pill pill-role" title="API rolü: ' +
+          esc(u.role) +
+          '">' +
+          esc(accountKindTr(u.role)) +
+          '</span></td>' +
+          '<td>' +
+          esc(u.status) +
+          '</td>' +
+          '<td>' +
+          (u.isVerified
+            ? '<span class="pill pill-open">Doğrulandı</span>'
+            : '<span class="pill pill-closed">Bekliyor</span>') +
+          '</td>' +
+          '<td>' +
+          esc(appSt) +
+          '</td>' +
+          '<td style="max-width:200px;font-size:11px">' +
+          esc(lp) +
+          '</td>' +
+          '<td style="max-width:220px;font-size:12px;line-height:1.35">' +
+          rec +
+          '</td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('input.push-user-cb').forEach((cb) => {
+        cb.addEventListener('change', updatePushDirSelectionHint);
+      });
+      updatePushDirSelectionHint();
+      applyPushDirSearchFilter();
+    }
+
+    async function refreshUsers() {
+      const data = await req('/admin/users');
+      window.__cacheUsers = data;
+      const tbody = document.getElementById('users-tbody');
+      tbody.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">Kayıt yok</div></td></tr>';
+        syncPushUserDirectoryFromUsers(data);
+        updateDashboardStats();
+        return;
+      }
+      for (const u of data) {
+        const name = u.profile?.displayName ?? '—';
+        const appSt = u.listenerApplication?.status ?? '—';
+        let lp = '—';
+        if (u.listenerProfile) {
+          const lpv = u.listenerProfile;
+          const avg = lpv.ratingAvg != null ? Number(lpv.ratingAvg).toFixed(2) : '0';
+          const ovr = lpv.presenceOverride || 'auto';
+          lp = `çevrimiçi: ${lpv.isOnline ? 'evet' : 'hayır'}, müsait: ${lpv.isAvailable ? 'evet' : 'hayır'}, mod: ${ovr}, puan: ${avg} (${lpv.ratingCount ?? 0})`;
+        }
+        let rec = '—';
+        const labels = u.listenerProfile && Array.isArray(u.listenerProfile.adminRecognitionLabels) ? u.listenerProfile.adminRecognitionLabels : [];
+        if (labels.length) rec = esc(labels.join(' · '));
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + esc(name) + '</td>' +
+          '<td>' + esc(genderTr(u.gender)) + '</td>' +
+          '<td>' + esc(u.email) + '</td>' +
+          '<td><span class="pill pill-role" title="API rolü: ' + esc(u.role) + '">' + esc(accountKindTr(u.role)) + '</span></td>' +
+          '<td>' + esc(u.status) + '</td>' +
+          '<td>' + (u.isVerified ? '<span class="pill pill-open">Doğrulandı</span>' : '<span class="pill pill-closed">Bekliyor</span>') + '</td>' +
+          '<td>' + esc(appSt) + '</td>' +
+          '<td style="max-width:200px;font-size:11px">' + esc(lp) + '</td>' +
+          '<td style="max-width:220px;font-size:12px;line-height:1.35">' + rec + '</td>' +
+          '<td style="white-space:nowrap">' + esc((u.createdAt || '').replace('T', ' ').slice(0, 19)) + '</td>' +
+          '<td><button type="button" class="btn btn-sm btn-edit-user" data-user-id="' + esc(u.id).replace(/"/g, '&quot;') + '">Düzenle</button></td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' + esc(u.id).replace(/"/g, '&quot;') + '">' + esc(u.id) + '</code></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+      syncPushUserDirectoryFromUsers(data);
+      updateDashboardStats();
+    }
+
+    function applyPushDirSearchFilter() {
+      const input = document.getElementById('push-dir-search');
+      const q = (input && input.value ? input.value : '').trim().toLowerCase();
+      document.querySelectorAll('#push-users-tbody tr.push-user-row').forEach((tr) => {
+        const hay = tr.dataset.searchText || '';
+        tr.style.display = !q || hay.includes(q) ? '' : 'none';
+      });
+    }
+
+    function getVisiblePushUserCheckboxes() {
+      return Array.from(
+        document.querySelectorAll('#push-users-tbody tr.push-user-row'),
+      )
+        .filter((tr) => tr.style.display !== 'none')
+        .map((tr) => tr.querySelector('input.push-user-cb'))
+        .filter(Boolean);
+    }
+
+    (function initPushUserDirControls() {
+      const search = document.getElementById('push-dir-search');
+      if (search) {
+        search.addEventListener('input', function () {
+          applyPushDirSearchFilter();
+          const all = document.getElementById('push-dir-select-all');
+          if (all) {
+            all.checked = false;
+            all.indeterminate = false;
+          }
+        });
+      }
+      const allCb = document.getElementById('push-dir-select-all');
+      if (allCb) {
+        allCb.addEventListener('change', function (e) {
+          const on = e.target.checked;
+          getVisiblePushUserCheckboxes().forEach(function (cb) {
+            cb.checked = on;
+          });
+          updatePushDirSelectionHint();
+        });
+      }
+      const refBtn = document.getElementById('btn-refresh-push-users');
+      if (refBtn) {
+        refBtn.addEventListener('click', function () {
+          refreshUsers()
+            .then(function () {
+              toast('Kullanıcı listesi ve push dizini güncellendi');
+            })
+            .catch(function (e) {
+              alert(e.message || e);
+            });
+        });
+      }
+    })();
+
+    function presenceOverrideTr(ov) {
+      const m = {
+        auto: 'Otomatik (socket)',
+        force_online: 'Zorla çevrimiçi',
+        force_offline: 'Zorla çevrimdışı',
+      };
+      return m[ov] || String(ov || '—');
+    }
+
+    async function refreshOnlineListeners() {
+      const data = await req('/admin/users/online');
+      window.__cacheOnlineListeners = data;
+      const tbody = document.getElementById('online-listeners-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="9"><div class="empty-state">Şu an çevrimiçi dinleyen yok (veya kayıt yok)</div></td></tr>';
+        updateDashboardStats();
+        return;
+      }
+      for (const u of data) {
+        const name = u.profile?.displayName ?? '—';
+        const lp = u.listenerProfile || {};
+        const avg =
+          lp.ratingAvg != null ? Number(lp.ratingAvg).toFixed(2) : '—';
+        const rc = lp.ratingCount != null ? String(lp.ratingCount) : '0';
+        const lpUp = (lp.updatedAt || '').replace('T', ' ').slice(0, 19) || '—';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><span class="pill pill-open">Çevrimiçi</span></td>' +
+          '<td>' + esc(name) + '</td>' +
+          '<td>' + esc(u.email) + '</td>' +
+          '<td><span class="pill pill-role" title="API: ' + esc(u.role) + '">' + esc(accountKindTr(u.role)) + '</span></td>' +
+          '<td>' +
+            (lp.isAvailable
+              ? '<span class="pill pill-open">Evet</span>'
+              : '<span class="pill pill-closed">Hayır</span>') +
+          '</td>' +
+          '<td style="max-width:200px;font-size:12px">' + esc(presenceOverrideTr(lp.presenceOverride)) + '</td>' +
+          '<td style="white-space:nowrap">' + esc(avg) + ' <span class="text-muted" style="color:var(--text-muted);font-size:12px">(' + esc(rc) + ')</span></td>' +
+          '<td style="white-space:nowrap;font-size:12px">' + esc(lpUp) + '</td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' + esc(u.id).replace(/"/g, '&quot;') + '">' + esc(u.id) + '</code></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+      updateDashboardStats();
+    }
+
+    async function refreshVerifySelfies() {
+      const data = await req('/admin/users/verify-selfies?status=pending');
+      const tbody = document.getElementById('verify-selfies-tbody');
+      tbody.innerHTML = '';
+      const list = Array.isArray(data) ? data : [];
+      if (list.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="6"><div class="empty-state">Onay bekleyen selfie yok</div></td></tr>';
+        return;
+      }
+      for (const row of list) {
+        const p = row.profile || {};
+        const tr = document.createElement('tr');
+        const submitted = (p.verifySelfieSubmittedAt || '').replace('T', ' ').slice(0, 19) || '—';
+        const selfieUrl = p.verifySelfieUrl || '';
+        tr.innerHTML =
+          '<td>' + esc(p.displayName || '—') + '</td>' +
+          '<td>' + esc(row.email || '—') + '</td>' +
+          '<td style="white-space:nowrap">' + esc(submitted) + '</td>' +
+          '<td>' +
+            (selfieUrl
+              ? '<a href="' + esc(selfieUrl).replace(/"/g, '&quot;') + '" target="_blank" rel="noreferrer">Görseli aç</a>'
+              : '—') +
+          '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button type="button" class="btn btn-sm btn-verify-approve" data-user-id="' +
+            esc(row.id).replace(/"/g, '&quot;') +
+            '">Onayla</button> ' +
+            '<button type="button" class="btn btn-sm btn-danger btn-verify-reject" data-user-id="' +
+            esc(row.id).replace(/"/g, '&quot;') +
+            '">Reddet</button>' +
+          '</td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' +
+            esc(row.id).replace(/"/g, '&quot;') +
+            '">' +
+            esc(row.id) +
+            '</code></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+    }
+
+    async function refreshDiscoverUsers() {
+      const data = await req('/admin/discover-users');
+      const tbody = document.getElementById('discover-users-tbody');
+      tbody.innerHTML = '';
+      const list = Array.isArray(data) ? data : [];
+      const visible = list.filter((r) => r.visibleInDiscover).length;
+      const hidden = list.length - visible;
+      document.getElementById('stat-disc-total').textContent = String(list.length);
+      document.getElementById('stat-disc-visible').textContent = String(visible);
+      document.getElementById('stat-disc-hidden').textContent = String(hidden);
+      if (list.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="8"><div class="empty-state">Kayıt yok</div></td></tr>';
+        return;
+      }
+      for (const row of list) {
+        const u = row.user;
+        if (!u) continue;
+        const name = u.profile?.displayName ?? '—';
+        const vis = row.visibleInDiscover
+          ? '<span class="pill pill-open">Evet</span>'
+          : '<span class="pill pill-closed">Hayır</span>';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + vis + '</td>' +
+          '<td>' + esc(name) + '</td>' +
+          '<td>' + esc(u.email) + '</td>' +
+          '<td><span class="pill pill-role" title="API rolü: ' + esc(u.role) + '">' + esc(accountKindTr(u.role)) + '</span></td>' +
+          '<td>' + esc(u.status) + '</td>' +
+          '<td>' +
+            (u.isVerified ? '<span class="pill pill-open">Doğrulandı</span>' : '<span class="pill pill-closed">Bekliyor</span>') +
+          '</td>' +
+          '<td style="white-space:nowrap">' +
+            esc((row.updatedAt || '').replace('T', ' ').slice(0, 19)) +
+          '</td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' +
+            esc(u.id).replace(/"/g, '&quot;') +
+            '">' +
+            esc(u.id) +
+            '</code></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+    }
+
+    document.getElementById('btn-refresh-discover-users').onclick = () =>
+      refreshDiscoverUsers()
+        .then(() => toast('Keşfet listesi güncellendi'))
+        .catch((e) => alert(e.message));
+
+    document.getElementById('btn-refresh-online-listeners').onclick = () =>
+      refreshOnlineListeners()
+        .then(() => toast('Çevrimiçi liste güncellendi'))
+        .catch((e) => alert(e.message));
+
+    document.getElementById('btn-refresh-users').onclick = () =>
+      refreshUsers().then(() => toast('Kullanıcılar güncellendi')).catch((e) => alert(e.message));
+
+    document.getElementById('btn-refresh-verify-selfies').onclick = () =>
+      refreshVerifySelfies().then(() => toast('Selfie kuyruğu güncellendi')).catch((e) => alert(e.message));
+
+    document.getElementById('btn-goto-new-user').onclick = () => {
+      const el = document.getElementById('admin-new-user-card');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => document.getElementById('new-user-email')?.focus(), 400);
+      }
+    };
+
+    function closeUserEditModal() {
+      const m = document.getElementById('user-edit-modal');
+      m.classList.remove('open');
+      m.setAttribute('aria-hidden', 'true');
+    }
+    function openUserEditModal() {
+      const m = document.getElementById('user-edit-modal');
+      m.classList.add('open');
+      m.setAttribute('aria-hidden', 'false');
+    }
+    document.querySelectorAll('#user-edit-modal [data-close-modal]').forEach((el) => {
+      el.addEventListener('click', closeUserEditModal);
+    });
+
+    document.getElementById('users-tbody').addEventListener('click', (e) => {
+      const btn = e.target.closest('button.btn-edit-user');
+      if (!btn) return;
+      const userId = btn.getAttribute('data-user-id');
+      const list = window.__cacheUsers;
+      if (!userId || !Array.isArray(list)) return;
+      const u = list.find((x) => x.id === userId);
+      if (!u) {
+        alert('Kullanıcı bulunamadı; listeyi yenileyin.');
+        return;
+      }
+      document.getElementById('edit-user-id').value = u.id;
+      document.getElementById('edit-user-email').value = u.email || '';
+      document.getElementById('edit-user-display').value = (u.profile && u.profile.displayName) ? u.profile.displayName : '';
+      document.getElementById('edit-user-role').value = u.role;
+      document.getElementById('edit-user-status').value = u.status || 'active';
+      document.getElementById('edit-user-verified').checked = !!u.isVerified;
+      document.getElementById('edit-user-password').value = '';
+      openUserEditModal();
+    });
+
+    document.getElementById('verify-selfies-tbody').addEventListener('click', async (e) => {
+      const approveBtn = e.target.closest('button.btn-verify-approve');
+      const rejectBtn = e.target.closest('button.btn-verify-reject');
+      if (!approveBtn && !rejectBtn) return;
+      const userId = (approveBtn || rejectBtn).getAttribute('data-user-id');
+      if (!userId) return;
+      try {
+        if (approveBtn) {
+          await req('/admin/users/' + encodeURIComponent(userId) + '/verify-selfie', {
+            method: 'PATCH',
+            body: { status: 'approved' },
+          });
+          toast('Selfie onaylandı');
+        } else {
+          const reason = prompt('Reddetme nedeni (opsiyonel):', '') || '';
+          await req('/admin/users/' + encodeURIComponent(userId) + '/verify-selfie', {
+            method: 'PATCH',
+            body: { status: 'rejected', reason: reason.trim() || undefined },
+          });
+          toast('Selfie reddedildi');
+        }
+        await refreshVerifySelfies();
+        await refreshUsers();
+      } catch (err) {
+        alert(err.message || err);
+      }
+    });
+
+    document.getElementById('btn-create-user').onclick = async () => {
+      try {
+        const email = document.getElementById('new-user-email').value.trim();
+        const password = document.getElementById('new-user-password').value;
+        const displayName = document.getElementById('new-user-display').value.trim();
+        const role = document.getElementById('new-user-role').value;
+        const isVerified = document.getElementById('new-user-verified').checked;
+        if (!email) {
+          alert('E-posta gerekli');
+          return;
+        }
+        if (!password || password.length < 8) {
+          alert('Şifre en az 8 karakter olmalı');
+          return;
+        }
+        const body = { email, password, role, isVerified };
+        if (displayName) body.displayName = displayName;
+        await req('/admin/users', { method: 'POST', body });
+        toast('Kullanıcı oluşturuldu');
+        document.getElementById('new-user-email').value = '';
+        document.getElementById('new-user-password').value = '';
+        document.getElementById('new-user-display').value = '';
+        document.getElementById('new-user-verified').checked = false;
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    document.getElementById('btn-save-user-edit').onclick = async () => {
+      try {
+        const id = document.getElementById('edit-user-id').value.trim();
+        const email = document.getElementById('edit-user-email').value.trim();
+        const displayName = document.getElementById('edit-user-display').value.trim();
+        const role = document.getElementById('edit-user-role').value;
+        const status = document.getElementById('edit-user-status').value;
+        const isVerified = document.getElementById('edit-user-verified').checked;
+        const password = document.getElementById('edit-user-password').value;
+        if (!id) return;
+        if (!email) {
+          alert('E-posta gerekli');
+          return;
+        }
+        const body = { email, displayName, role, status, isVerified };
+        if (password && password.length >= 8) body.password = password;
+        else if (password && password.length > 0) {
+          alert('Şifre en az 8 karakter olmalı veya tamamen boş bırakın');
+          return;
+        }
+        await req('/admin/users/' + id, { method: 'PATCH', body });
+        toast('Kullanıcı güncellendi');
+        closeUserEditModal();
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    document.getElementById('btn-save-presence').onclick = async () => {
+      try {
+        const userId = document.getElementById('pres-user-id').value.trim();
+        const override = document.getElementById('pres-override').value;
+        if (!userId) {
+          alert('Kullanıcı UUID gerekli');
+          return;
+        }
+        await req('/admin/listeners/' + userId + '/presence-override', {
+          method: 'PATCH',
+          body: { override },
+        });
+        toast('Varlık modu kaydedildi');
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    document.getElementById('btn-save-rec').onclick = async () => {
+      try {
+        const userId = document.getElementById('rec-user-id').value.trim();
+        const raw = document.getElementById('rec-labels').value;
+        const labels = raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+        if (!userId) {
+          alert('Kullanıcı ID gerekli');
+          return;
+        }
+        await req('/admin/listeners/' + userId + '/recognition-labels', { method: 'PATCH', body: { labels } });
+        toast('Takdir ifadeleri kaydedildi');
+        await refreshUsers();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    };
+
+    function renderRoomsTable(data) {
+      window.__cacheRooms = Array.isArray(data) ? data : [];
+      const tbody = document.getElementById('rooms-tbody');
+      tbody.innerHTML = '';
+      document.getElementById('rooms-json').textContent = JSON.stringify(data, null, 2);
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Oda yok</div></td></tr>';
+        updateDashboardStats();
+        return;
+      }
+      for (const r of data) {
+        const pc = r._count?.participants ?? '—';
+        const mc = r._count?.messages ?? '—';
+        const st = r.status === 'open' ? '<span class="pill pill-open">açık</span>' : '<span class="pill pill-closed">' + esc(r.status) + '</span>';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><strong>' + esc(r.title) + '</strong>' + (r.description ? '<br><span style="color:var(--text-muted);font-size:12px">' + esc(r.description) + '</span>' : '') + '</td>' +
+          '<td>' + st + '</td>' +
+          '<td>' + esc(pc) + '</td>' +
+          '<td>' + esc(mc) + '</td>' +
+          '<td style="white-space:nowrap">' + esc((r.createdAt || '').replace('T', ' ').slice(0, 19)) + '</td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' + esc(r.id).replace(/"/g, '&quot;') + '">' + esc(r.id) + '</code></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+      updateDashboardStats();
+    }
+
+    async function refreshRooms() {
+      const data = await req('/admin/group-rooms');
+      renderRoomsTable(data);
+    }
+
+    async function refreshJoinRequests() {
+      const data = await req('/admin/group-rooms/join-requests');
+      const tbody = document.getElementById('join-requests-tbody');
+      tbody.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="6"><div class="empty-state">Bekleyen istek yok</div></td></tr>';
+        return;
+      }
+      for (const row of data) {
+        const roomTitle = row.room && row.room.title ? row.room.title : row.roomId;
+        const who =
+          (row.requester && row.requester.profile && row.requester.profile.displayName) ||
+          (row.requester && row.requester.email) ||
+          row.userId;
+        const note = row.message ? esc(row.message) : '—';
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + esc(roomTitle) + '</td>' +
+          '<td style="max-width:180px;word-break:break-word">' + esc(who) + '</td>' +
+          '<td style="max-width:200px;font-size:12px">' + note + '</td>' +
+          '<td style="white-space:nowrap">' +
+          esc((row.createdAt || '').replace('T', ' ').slice(0, 19)) +
+          '</td>' +
+          '<td><code title="Kopyala" data-copy="' +
+          esc(row.id).replace(/"/g, '&quot;') +
+          '">' +
+          esc(row.id) +
+          '</code></td>' +
+          '<td style="white-space:nowrap">' +
+          '<button type="button" class="btn btn-primary btn-sm" data-approve-req="' +
+          esc(row.id).replace(/"/g, '&quot;') +
+          '">Onayla</button> ' +
+          '<button type="button" class="btn btn-danger btn-sm" data-reject-req="' +
+          esc(row.id).replace(/"/g, '&quot;') +
+          '">Reddet</button></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+    }
+
+    document.getElementById('join-requests-tbody').addEventListener('click', async (e) => {
+      const ap = e.target.closest('[data-approve-req]');
+      const rj = e.target.closest('[data-reject-req]');
+      if (!ap && !rj) return;
+      const id = (ap || rj).getAttribute(ap ? 'data-approve-req' : 'data-reject-req');
+      if (!id) return;
+      try {
+        if (ap) {
+          await req('/admin/group-rooms/join-requests/' + id + '/approve', { method: 'POST' });
+          toast('İstek onaylandı — kullanıcı odaya eklendi');
+        } else {
+          if (!confirm('Bu katılma isteğini reddetmek istiyor musun?')) return;
+          await req('/admin/group-rooms/join-requests/' + id + '/reject', { method: 'POST' });
+          toast('İstek reddedildi');
+        }
+        await Promise.all([refreshJoinRequests(), refreshRooms()]);
+      } catch (err) {
+        alert(err.message || err);
+      }
+    });
+
+    document.getElementById('btn-refresh-rooms').onclick = () =>
+      refreshRooms().then(() => toast('Odalar güncellendi')).catch((e) => alert(e.message));
+
+    document.getElementById('btn-refresh-join-requests').onclick = () =>
+      refreshJoinRequests()
+        .then(() => toast('Katılma istekleri güncellendi'))
+        .catch((e) => alert(e.message));
+
+    document.getElementById('btn-refresh-all').onclick = async () => {
+      try {
+        await Promise.all([
+          refreshUsers(),
+          refreshOnlineListeners(),
+          refreshVerifySelfies(),
+          refreshDiscoverUsers(),
+          refreshRooms(),
+          refreshJoinRequests(),
+          refreshSessions(),
+          refreshSessionGifts(),
+          refreshMailSettings(),
+          refreshAppSettings(),
+        ]);
+        toast('Tüm veriler yenilendi');
+      } catch (e) {
+        alert(e.message);
+      }
+    };
+
+    function jwtSub(tok) {
+      if (!tok) return null;
+      try {
+        const p = tok.split('.')[1];
+        const json = atob(p.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(json).sub;
+      } catch {
+        return null;
+      }
+    }
+
+    let adminChatSocket = null;
+    let adminChatSessionId = null;
+    const adminMsgIds = new Set();
+
+    function disconnectAdminChat() {
+      if (adminChatSocket) {
+        try {
+          adminChatSocket.disconnect();
+        } catch (_) {}
+        adminChatSocket = null;
+      }
+      adminChatSessionId = null;
+      adminMsgIds.clear();
+      const card = document.getElementById('admin-chat-card');
+      if (card) card.style.display = 'none';
+      const btn = document.getElementById('btn-chat-disconnect');
+      if (btn) btn.style.display = 'none';
+      const input = document.getElementById('chat-input');
+      if (input) input.value = '';
+    }
+
+    function appendAdminChatMessage(m, myUserId) {
+      if (!m || !m.id) return;
+      if (adminMsgIds.has(m.id)) return;
+      adminMsgIds.add(m.id);
+      const box = document.getElementById('chat-messages');
+      const el = document.createElement('div');
+      const isSys = m.messageType === 'system';
+      const mine = !isSys && m.senderId === myUserId;
+      el.className = 'admin-chat-msg ' + (isSys ? 'system' : mine ? 'mine' : 'theirs');
+      const body = document.createElement('div');
+      body.textContent = m.content || '';
+      el.appendChild(body);
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent =
+        (m.createdAt || '').replace('T', ' ').slice(0, 19) +
+        (isSys ? '' : ' · ' + String(m.senderId).slice(0, 8) + '…');
+      el.appendChild(meta);
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function openAdminSessionChat(sessionId) {
+      const myId = jwtSub(token());
+      disconnectAdminChat();
+      try {
+        await req('/admin/sessions/' + sessionId + '/join-chat', { method: 'POST' });
+      } catch (e) {
+        alert(e.message || e);
+        return;
+      }
+      adminChatSessionId = sessionId;
+      document.getElementById('admin-chat-card').style.display = 'block';
+      document.getElementById('btn-chat-disconnect').style.display = 'inline-flex';
+      const label = document.getElementById('chat-session-label');
+      label.textContent = sessionId.slice(0, 13) + '…';
+      label.title = sessionId;
+      const box = document.getElementById('chat-messages');
+      box.innerHTML = '';
+      adminMsgIds.clear();
+      try {
+        const history = await req('/sessions/' + sessionId + '/messages');
+        if (Array.isArray(history)) {
+          for (const m of history) appendAdminChatMessage(m, myId);
+        }
+      } catch (e) {
+        toast('Geçmiş yüklenemedi: ' + (e.message || e));
+      }
+      const base = api().replace(/\/$/, '');
+      adminChatSocket = io(base + '/realtime', {
+        auth: { token: token() },
+        transports: ['websocket'],
+      });
+      adminChatSocket.on('connect', () => {
+        adminChatSocket.emit('session:join', { sessionId: adminChatSessionId });
+      });
+      adminChatSocket.on('session:message', (data) => {
+        if (!data || typeof data !== 'object') return;
+        if (data.sessionId !== adminChatSessionId) return;
+        appendAdminChatMessage(data, myId);
+      });
+      adminChatSocket.on('connect_error', (err) => {
+        toast('Socket: ' + (err && err.message ? err.message : 'bağlantı hatası'));
+      });
+      toast('Sohbete katıldınız');
+    }
+
+    function sendAdminChat() {
+      const input = document.getElementById('chat-input');
+      const text = (input.value || '').trim();
+      if (!text || !adminChatSocket || !adminChatSessionId) return;
+      if (!adminChatSocket.connected) {
+        toast('Socket bağlı değil');
+        return;
+      }
+      const clientMessageId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : 'adm-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      adminChatSocket.emit('session:message', {
+        sessionId: adminChatSessionId,
+        content: text,
+        clientMessageId,
+      });
+      input.value = '';
+    }
+
+    document.getElementById('btn-chat-send').onclick = () => sendAdminChat();
+    document.getElementById('chat-input').addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        sendAdminChat();
+      }
+    });
+    document.getElementById('btn-chat-disconnect').onclick = () => {
+      disconnectAdminChat();
+      toast('Sohbet kapatıldı');
+    };
+
+    async function refreshSessions() {
+      const st = document.getElementById('sess-filter-status').value;
+      const q = st ? '?status=' + encodeURIComponent(st) : '';
+      const data = await req('/admin/sessions' + q);
+      const tbody = document.getElementById('sessions-tbody');
+      tbody.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="7"><div class="empty-state">Kayıt yok</div></td></tr>';
+        return;
+      }
+      for (const s of data) {
+        const rq = s.requester;
+        const ln = s.listener;
+        const rLabel = (rq && (rq.profile && rq.profile.displayName)) || (rq && rq.email) || (rq && rq.id) || '—';
+        const lLabel = (ln && (ln.profile && ln.profile.displayName)) || (ln && ln.email) || (ln && ln.id) || '—';
+        const mod = (s.participants || []).some((p) => p.role === 'moderator');
+        const tr = document.createElement('tr');
+        const sid = esc(s.id);
+        tr.innerHTML =
+          '<td>' +
+          esc(s.status) +
+          (mod ? ' <span class="pill pill-open" title="Moderatör katılmış">mod</span>' : '') +
+          '</td>' +
+          '<td>' +
+          esc(String(rLabel).slice(0, 48)) +
+          '</td>' +
+          '<td>' +
+          esc(String(lLabel).slice(0, 48)) +
+          '</td>' +
+          '<td>' +
+          esc(s._count && s._count.messages != null ? s._count.messages : '0') +
+          '</td>' +
+          '<td style="white-space:nowrap">' +
+          esc((s.createdAt || '').replace('T', ' ').slice(0, 19)) +
+          '</td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' +
+          sid.replace(/"/g, '&quot;') +
+          '">' +
+          esc(s.id.slice(0, 10)) +
+          '…</code></td>' +
+          '<td><button type="button" class="btn btn-primary btn-sm sess-chat-btn" data-sid="' +
+          sid.replace(/"/g, '&quot;') +
+          '">Sohbete katıl</button></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+      tbody.querySelectorAll('.sess-chat-btn').forEach((btn) => {
+        btn.addEventListener('click', () =>
+          openAdminSessionChat(btn.getAttribute('data-sid')),
+        );
+      });
+    }
+
+    document.getElementById('btn-refresh-sessions').onclick = () =>
+      refreshSessions()
+        .then(() => toast('Oturumlar güncellendi'))
+        .catch((e) => alert(e.message));
+
+    async function refreshSessionGifts() {
+      const limEl = document.getElementById('gifts-limit');
+      let lim = 200;
+      if (limEl && limEl.value) {
+        const n = parseInt(limEl.value, 10);
+        if (!Number.isNaN(n)) lim = Math.min(500, Math.max(1, n));
+      }
+      const data = await req('/admin/session-gifts?limit=' + lim);
+      const tbody = document.getElementById('gifts-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="8"><div class="empty-state">Hediye kaydı yok</div></td></tr>';
+        return;
+      }
+      for (const g of data) {
+        const sn = (x) => (x && (x.displayName || x.email)) || (x && x.id) || '—';
+        const tr = document.createElement('tr');
+        const sid = g.sessionId;
+        tr.innerHTML =
+          '<td style="white-space:nowrap;font-size:12px">' +
+          esc((g.createdAt || '').replace('T', ' ').slice(0, 19)) +
+          '</td>' +
+          '<td><code>' +
+          esc(g.giftCode) +
+          '</code></td>' +
+          '<td>' +
+          (g.priceMinor != null ? esc(String(g.priceMinor)) : '—') +
+          '</td>' +
+          '<td>' +
+          (g.recipientEarnedMinor != null ? esc(String(g.recipientEarnedMinor)) : '—') +
+          '</td>' +
+          '<td>' +
+          (g.platformFeeMinor != null ? esc(String(g.platformFeeMinor)) : '—') +
+          '</td>' +
+          '<td style="max-width:160px">' +
+          esc(String(sn(g.sender)).slice(0, 40)) +
+          '</td>' +
+          '<td style="max-width:160px">' +
+          esc(String(sn(g.recipient)).slice(0, 40)) +
+          '</td>' +
+          '<td><code title="Kopyalamak için tıklayın" data-copy="' +
+          esc(sid).replace(/"/g, '&quot;') +
+          '">' +
+          esc(sid.slice(0, 8)) +
+          '…</code></td>';
+        tbody.appendChild(tr);
+      }
+      tbody.querySelectorAll('code[data-copy]').forEach((c) => {
+        c.addEventListener('click', () => {
+          const v = c.getAttribute('data-copy');
+          navigator.clipboard.writeText(v).then(() => toast('Panoya kopyalandı'));
+        });
+      });
+    }
+
+    document.getElementById('btn-refresh-gifts').onclick = () =>
+      refreshSessionGifts()
+        .then(() => toast('Hediye logları güncellendi'))
+        .catch((e) => alert(e.message));
+
+    document.getElementById('sess-filter-status').addEventListener('change', () => {
+      refreshSessions().catch((e) => alert(e.message));
+    });
+
+    document.getElementById('btn-create-room').onclick = async () => {
+      try {
+        const title = document.getElementById('room-title').value.trim();
+        const description = document.getElementById('room-desc').value.trim() || undefined;
+        const created = await req('/admin/group-rooms', { method: 'POST', body: { title, description } });
+        toast('Oda oluşturuldu');
+        document.getElementById('part-room-id').value = created.id;
+        document.getElementById('close-room-id').value = created.id;
+        await refreshRooms();
+      } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('btn-add-participant').onclick = async () => {
+      try {
+        const roomId = document.getElementById('part-room-id').value.trim();
+        const userId = document.getElementById('part-user-id').value.trim();
+        const role = document.getElementById('part-role').value;
+        await req('/admin/group-rooms/' + roomId + '/participants', { method: 'POST', body: { userId, role } });
+        toast('Katılımcı eklendi');
+        await refreshRooms();
+      } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('btn-close-room').onclick = async () => {
+      try {
+        const roomId = document.getElementById('close-room-id').value.trim();
+        await fetch(api() + '/admin/group-rooms/' + roomId + '/close', {
+          method: 'PATCH',
+          headers: { Authorization: 'Bearer ' + token(), Accept: 'application/json' },
+        }).then(async (r) => { if (!r.ok) throw new Error(await r.text()); });
+        toast('Oda kapatıldı');
+        await refreshRooms();
+      } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('btn-load-messages').onclick = async () => {
+      try {
+        const roomId = document.getElementById('msg-room-id').value.trim();
+        const data = await req('/admin/group-rooms/' + roomId + '/messages');
+        document.getElementById('messages-out').textContent = JSON.stringify(data, null, 2);
+        toast('Mesajlar yüklendi');
+      } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('btn-mod-hide').onclick = async () => modMsg(true);
+    document.getElementById('btn-mod-show').onclick = async () => modMsg(false);
+
+    async function modMsg(hidden) {
+      try {
+        const roomId = document.getElementById('mod-room-id').value.trim();
+        const messageId = document.getElementById('mod-msg-id').value.trim();
+        await req('/admin/group-rooms/' + roomId + '/messages/' + messageId + '/moderate', {
+          method: 'PATCH',
+          body: { hidden },
+        });
+        toast('Moderasyon güncellendi');
+      } catch (e) { alert(e.message || e); }
+    }
+
+    document.getElementById('btn-logout').onclick = () => {
+      localStorage.removeItem('access_token');
+      location.reload();
+    };
+
+    if (token()) {
+      showApp();
+      renderPushHistory();
+      refreshUsers().catch(() => {});
+      refreshOnlineListeners().catch(() => {});
+      refreshVerifySelfies().catch(() => {});
+      refreshDiscoverUsers().catch(() => {});
+      refreshRooms().catch(() => {});
+      refreshJoinRequests().catch(() => {});
+      refreshSessions().catch(() => {});
+      refreshSessionGifts().catch(() => {});
+    }
+  </script>
+</body>
+</html>

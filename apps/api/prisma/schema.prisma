@@ -1,0 +1,711 @@
+// Rahatla MVP — PostgreSQL modeli (Prisma)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  normal_user
+  listener_applicant
+  approved_listener
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  deleted
+}
+
+/// Kullanıcı cinsiyeti (isteğe bağlı; null = belirtilmedi).
+enum Gender {
+  female
+  male
+  non_binary
+  prefer_not_to_say
+}
+
+enum ListenerApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum CommunicationPreference {
+  text_chat
+  voice_note
+  live_voice
+}
+
+enum SupportRequestStatus {
+  queued
+  matching
+  matched
+  cancelled
+  expired
+}
+
+enum SupportCategory {
+  vent
+  need_someone_to_listen
+  calm_chat
+  motivation
+  not_feeling_alone
+  /// Profil / hızlı ruh hali: nötr (null ile karışmaz).
+  feeling_neutral
+}
+
+enum SessionType {
+  text_chat
+  voice_note
+  live_voice
+}
+
+enum SessionStatus {
+  pending
+  matched
+  active
+  ended
+  cancelled
+  reported
+}
+
+enum SessionParticipantRole {
+  requester
+  listener
+  /// Yönetici panelden birebir sohbete katılan moderatör
+  moderator
+}
+
+enum MessageType {
+  text
+  system
+  audio
+  image
+}
+
+enum ReportStatus {
+  open
+  reviewing
+  resolved
+  dismissed
+}
+
+enum NotificationChannel {
+  push
+  email
+  in_app
+}
+
+enum GroupChatRoomStatus {
+  open
+  closed
+}
+
+enum GroupChatParticipantRole {
+  member
+  listener
+  moderator
+}
+
+enum GroupChatJoinRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+enum WalletLedgerType {
+  gift_sent
+  gift_received
+  topup
+  admin_credit
+  admin_debit
+  payout_hold
+  payout_refund
+}
+
+enum PayoutRequestStatus {
+  pending
+  paid
+  rejected
+}
+
+enum VerifySelfieStatus {
+  none
+  pending
+  approved
+  rejected
+}
+
+/// Tek satır (`id = default`). Boş alanlar ortam değişkenine düşer. SMTP şifresi burada tutulmaz.
+model SiteMailSettings {
+  id     String @id @default("default")
+  /// Örn. email-smtp.eu-central-1.amazonaws.com
+  smtpHost        String?  @map("smtp_host")
+  smtpPort        Int?     @map("smtp_port")
+  /// null = PORT/ SMTP_SECURE ortamına göre; true/false = zorla
+  smtpSecure      Boolean? @map("smtp_secure")
+  smtpUser        String?  @map("smtp_user")
+  mailFrom        String?  @map("mail_from")
+  appPublicApiUrl String?  @map("app_public_api_url")
+  /// Panelde gösterilen yardım linki (örn. AWS SES SMTP kılavuzu); gönderimi etkilemez.
+  providerDocsUrl String?  @map("provider_docs_url")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("site_mail_settings")
+}
+
+/// Tek satır (`id = default`). Keşif listesindeki yanıt hızı kademeleri (saniye üst sınırları).
+model SiteAppSettings {
+  id String @id @default("default")
+
+  /// Medyan gecikme ≤ bu kadar saniye → `spark` (varsayılan 300 = 5 dk).
+  replySparkMaxSeconds Int @default(300) @map("reply_spark_max_seconds")
+  /// ≤ bu kadar → `swift` (varsayılan 1800 = 30 dk).
+  replySwiftMaxSeconds Int @default(1800) @map("reply_swift_max_seconds")
+  /// ≤ bu kadar → `warm` (varsayılan 21600 = 6 saat); üzeri `easy`.
+  replyWarmMaxSeconds Int @default(21600) @map("reply_warm_max_seconds")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_app_settings")
+}
+
+/// Dinleyen çevrimiçi göstergesi: socket `auto` iken günceller; admin zorlayabilir.
+enum ListenerPresenceOverride {
+  auto
+  force_online
+  force_offline
+}
+
+/// Dinleyenin eşleşme / “hazır” havuzunda nasıl ele alınacağı (profilden).
+enum ListenerAvailabilityMode {
+  /// Her zaman müsait kabul (socket’ten bağımsız).
+  available
+  /// Eski davranış: presence + isOnline / isAvailable kuralları.
+  automatic
+  /// Havuzda görünmez, eşleşmez.
+  busy
+}
+
+model User {
+  id            String     @id @default(uuid()) @db.Uuid
+  email         String     @unique
+  passwordHash  String     @map("password_hash")
+  role          UserRole
+  status        UserStatus @default(active)
+  isVerified    Boolean    @default(false) @map("is_verified")
+  gender        Gender?    @map("gender")
+  /// Yaş filtresi / gösterim için (dinleyen listesi); isteğe bağlı.
+  birthDate     DateTime?  @map("birth_date") @db.Date
+  /// E-posta doğrulama (tek kullanımlık token).
+  emailVerificationToken   String?   @unique @map("email_verification_token")
+  emailVerificationExpires DateTime? @map("email_verification_expires")
+  /// Şifre sıfırlama (tek kullanımlık token).
+  passwordResetToken   String?   @unique @map("password_reset_token")
+  passwordResetExpires DateTime? @map("password_reset_expires")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  profile              Profile?
+  listenerApplication  ListenerApplication?
+  listenerProfile      ListenerProfile?
+  supportRequests         SupportRequest[]        @relation("RequesterSupportRequests")
+  matchedSupportRequests  SupportRequest[]        @relation("MatchedListenerSupportRequests")
+  reviewedApplications    ListenerApplication[]   @relation("ApplicationReviewer")
+  sessionsAsRequester  Session[]            @relation("RequesterSessions")
+  sessionsAsListener   Session[]            @relation("ListenerSessions")
+  sessionParticipants  SessionParticipant[]
+  messages             Message[]
+  voiceNotes           VoiceNote[]
+  ratingsGiven         Rating[]             @relation("RaterRatings")
+  ratingsReceived      Rating[]             @relation("RateeRatings")
+  reportsFiled         Report[]             @relation("ReporterReports")
+  reportsAgainst       Report[]             @relation("ReportedUserReports")
+  resolvedReports      Report[]             @relation("ReportResolver")
+  blocksInitiated      Block[]              @relation("BlockerBlocks")
+  blocksReceived       Block[]              @relation("BlockedBlocks")
+  notifications        Notification[]
+  adminActions         AdminAction[]
+  auditLogs            AuditLog[]
+  groupRoomsCreated    GroupChatRoom[]        @relation("GroupRoomCreator")
+  groupChatParticipants GroupChatParticipant[]
+  groupChatMessagesSent GroupChatMessage[]    @relation("GroupChatMessageSender")
+  groupChatJoinRequests GroupChatJoinRequest[] @relation("GroupChatJoinRequester")
+  joinRequestsReviewed  GroupChatJoinRequest[] @relation("GroupChatJoinReviewer")
+  sessionGiftsSent      SessionGift[]         @relation("SessionGiftSender")
+  wallet                UserWallet?
+  walletLedgerEntries   WalletLedgerEntry[]
+  payoutRequests        PayoutRequest[]
+  discoverListing       DiscoverListing?
+  fcmTokens             UserFcmToken[]
+
+  @@map("users")
+}
+
+/// Firebase FCM cihaz token’ı — filtreyle admin push ve ileride otomasyon için.
+model UserFcmToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  fcmToken  String   @unique @map("fcm_token")
+  /// ios | android
+  platform  String   @map("platform") @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_fcm_tokens")
+}
+
+/// Keşfet (dinleyen listesi / arama) görünürlüğü; kayıtta otomatik satır oluşur.
+model DiscoverListing {
+  userId              String   @id @map("user_id") @db.Uuid
+  visibleInDiscover   Boolean  @default(true) @map("visible_in_discover")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("discover_listings")
+}
+
+/// Birebir hediye fiyatları (kod, client ile uyumlu).
+model GiftCatalogItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique
+  label      String
+  priceMinor Int      @map("price_minor")
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("gift_catalog_items")
+}
+
+/// Önbellekli bakiye; hareketler `WalletLedgerEntry` ile uyumlu tutulmalı.
+model UserWallet {
+  userId       String   @id @map("user_id") @db.Uuid
+  balanceMinor Int      @default(0) @map("balance_minor")
+  currency     String   @default("TRY")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_wallets")
+}
+
+model WalletLedgerEntry {
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  amountMinor    Int              @map("amount_minor")
+  type           WalletLedgerType
+  referenceType  String?          @map("reference_type")
+  referenceId    String?          @map("reference_id") @db.Uuid
+  idempotencyKey String?          @unique @map("idempotency_key")
+  metaJson       Json?            @map("meta_json")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("wallet_ledger_entries")
+}
+
+model PayoutRequest {
+  id          String              @id @default(uuid()) @db.Uuid
+  userId      String              @map("user_id") @db.Uuid
+  amountMinor Int                 @map("amount_minor")
+  /// MVP: düz metin; üretimde şifreleme / ödeme sağlayıcı token önerilir.
+  iban        String
+  status      PayoutRequestStatus @default(pending)
+  adminNote   String?             @map("admin_note")
+  processedAt DateTime?           @map("processed_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("payout_requests")
+}
+
+model Profile {
+  id                 String            @id @default(uuid()) @db.Uuid
+  userId             String            @unique @map("user_id") @db.Uuid
+  displayName        String            @map("display_name")
+  avatarUrl          String?           @map("avatar_url")
+  /// Kimlik / güven doğrulaması için selfie (profil avatarından ayrı).
+  verifySelfieUrl    String?           @map("verify_selfie_url")
+  verifySelfieStatus VerifySelfieStatus @default(none) @map("verify_selfie_status")
+  verifySelfieSubmittedAt DateTime?    @map("verify_selfie_submitted_at")
+  verifySelfieReviewedAt DateTime?     @map("verify_selfie_reviewed_at")
+  verifySelfieReviewedBy String?       @map("verify_selfie_reviewed_by") @db.Uuid
+  verifySelfieRejectReason String?     @map("verify_selfie_reject_reason")
+  bio                String?
+  preferredLanguage  String            @map("preferred_language")
+  /// Kullanıcının paylaştığı güncel ruh hali (destek kategorisi ile aynı enum)
+  moodCategory       SupportCategory?  @map("mood_category")
+  /// Diğer kullanıcılara gerçek görünen ad yerine anonim göster.
+  preferAnonymous    Boolean           @default(false) @map("prefer_anonymous")
+  /// S3 URL listesi — profilde gösterilen ek fotoğraflar (en fazla 9).
+  profileImageUrls   String[]          @default([]) @map("profile_image_urls")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model ListenerApplication {
+  id                  String                    @id @default(uuid()) @db.Uuid
+  userId              String                    @unique @map("user_id") @db.Uuid
+  motivationText      String                    @map("motivation_text")
+  supportStyles       String[]                  @map("support_styles")
+  communicationTypes  String[]                  @map("communication_types")
+  availabilityJson    Json                      @map("availability_json")
+  voiceIntroUrl       String?                   @map("voice_intro_url")
+  status              ListenerApplicationStatus @default(pending)
+  reviewedBy          String?                   @map("reviewed_by") @db.Uuid
+  reviewedAt          DateTime?                 @map("reviewed_at")
+  rejectionReason     String?                   @map("rejection_reason")
+  createdAt           DateTime                  @default(now()) @map("created_at")
+  updatedAt           DateTime                  @updatedAt @map("updated_at")
+
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("ApplicationReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("listener_applications")
+}
+
+model ListenerProfile {
+  userId              String    @id @map("user_id") @db.Uuid
+  languages           String[]
+  supportCategories   String[]  @map("support_categories")
+  communicationTypes  String[]  @map("communication_types")
+  availabilityJson    Json      @map("availability_json")
+  voiceIntroUrl       String?   @map("voice_intro_url")
+  /// Yönetici panelinden verilen kısa takdir ifadeleri (örn. "İyi dinleyici", "Sadık")
+  adminRecognitionLabels String[] @default([]) @map("admin_recognition_labels")
+  ratingAvg           Decimal   @default(0) @map("rating_avg") @db.Decimal(3, 2)
+  ratingCount         Int       @default(0) @map("rating_count")
+  isOnline            Boolean   @default(false) @map("is_online")
+  presenceOverride    ListenerPresenceOverride @default(auto) @map("presence_override")
+  isAvailable         Boolean   @default(false) @map("is_available")
+  availabilityMode    ListenerAvailabilityMode @default(available) @map("availability_mode")
+  maxConcurrent       Int       @default(1) @map("max_concurrent_sessions")
+  passiveUntil        DateTime? @map("passive_until")
+  passiveReason       String?   @map("passive_reason")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("listener_profiles")
+}
+
+model SupportRequest {
+  id                       String                  @id @default(uuid()) @db.Uuid
+  requesterId              String                  @map("requester_id") @db.Uuid
+  category                 SupportCategory
+  languageCode             String                  @map("language_code")
+  communicationPreference  CommunicationPreference @map("communication_preference")
+  /// İsteğe bağlı kısa not (rahatlamak isteyenin kendi ifadesi)
+  requesterNote            String?                 @map("requester_note")
+  status                   SupportRequestStatus      @default(queued)
+  matchedListenerId        String?                 @map("matched_listener_id") @db.Uuid
+  matchExpiresAt           DateTime?               @map("match_expires_at")
+  createdAt                DateTime                @default(now()) @map("created_at")
+  updatedAt                DateTime                @updatedAt @map("updated_at")
+
+  requester       User      @relation("RequesterSupportRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  matchedListener User?     @relation("MatchedListenerSupportRequests", fields: [matchedListenerId], references: [id])
+  sessions        Session[]
+
+  @@index([status, languageCode, communicationPreference])
+  @@map("support_requests")
+}
+
+model Session {
+  id                   String        @id @default(uuid()) @db.Uuid
+  /// Liste seçimi ile açılan oturumlarda boş olabilir
+  supportRequestId     String?       @map("support_request_id") @db.Uuid
+  requesterId          String        @map("requester_id") @db.Uuid
+  listenerId           String        @map("listener_id") @db.Uuid
+  type                 SessionType
+  status               SessionStatus @default(pending)
+  startedAt            DateTime?     @map("started_at")
+  endedAt              DateTime?     @map("ended_at")
+  maxDurationSeconds   Int           @map("max_duration_seconds")
+  provider             String
+  providerRoomName     String?       @map("provider_room_name")
+  providerMetadataJson Json?         @map("provider_metadata_json")
+  /// İleride transcript / moderasyon çıktıları için genişletilebilir alan
+  analysisMetadataJson Json?       @map("analysis_metadata_json")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  supportRequest SupportRequest?      @relation(fields: [supportRequestId], references: [id], onDelete: Cascade)
+  requester      User                 @relation("RequesterSessions", fields: [requesterId], references: [id])
+  listener       User                 @relation("ListenerSessions", fields: [listenerId], references: [id])
+  participants   SessionParticipant[]
+  messages       Message[]
+  voiceNotes     VoiceNote[]
+  ratings        Rating[]
+  reports        Report[]
+  gifts          SessionGift[]
+
+  @@index([listenerId, status])
+  @@index([requesterId, status])
+  @@map("sessions")
+}
+
+/// Birebir sohbette gönderilen sanal hediye kaydı
+model SessionGift {
+  id                   String   @id @default(uuid()) @db.Uuid
+  sessionId            String   @map("session_id") @db.Uuid
+  senderId             String   @map("sender_id") @db.Uuid
+  giftCode             String   @map("gift_code")
+  /// Gönderen bakiyesinden düşen tutar (kuruş / jeton birimi).
+  priceMinor           Int?     @map("price_minor")
+  /// Alıcıya geçen net (komisyon sonrası).
+  recipientEarnedMinor Int?     @map("recipient_earned_minor")
+  platformFeeMinor     Int?     @map("platform_fee_minor")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender  User    @relation("SessionGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("session_gifts")
+}
+
+model SessionParticipant {
+  id        String                 @id @default(uuid()) @db.Uuid
+  sessionId String                 @map("session_id") @db.Uuid
+  userId    String                 @map("user_id") @db.Uuid
+  role      SessionParticipantRole
+  joinedAt  DateTime?              @map("joined_at")
+  leftAt    DateTime?              @map("left_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@map("session_participants")
+}
+
+model Message {
+  id              String      @id @default(uuid()) @db.Uuid
+  sessionId       String      @map("session_id") @db.Uuid
+  senderId        String      @map("sender_id") @db.Uuid
+  messageType     MessageType @map("message_type")
+  content         String?
+  audioUrl        String?     @map("audio_url")
+  imageUrl        String?     @map("image_url")
+  clientMessageId String?     @map("client_message_id")
+  deliveredAt     DateTime?   @map("delivered_at")
+  readAt          DateTime?   @map("read_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderId], references: [id])
+
+  @@unique([sessionId, clientMessageId])
+  @@index([sessionId, createdAt])
+  @@map("messages")
+}
+
+model VoiceNote {
+  id              String   @id @default(uuid()) @db.Uuid
+  sessionId       String   @map("session_id") @db.Uuid
+  uploaderId      String   @map("uploader_id") @db.Uuid
+  storageKey      String   @map("storage_key")
+  durationSeconds Int?     @map("duration_seconds")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  session  Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  uploader User    @relation(fields: [uploaderId], references: [id])
+
+  @@map("voice_notes")
+}
+
+model Rating {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id") @db.Uuid
+  raterId   String   @map("rater_id") @db.Uuid
+  rateeId   String   @map("ratee_id") @db.Uuid
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  rater   User    @relation("RaterRatings", fields: [raterId], references: [id])
+  ratee   User    @relation("RateeRatings", fields: [rateeId], references: [id])
+
+  @@unique([sessionId, raterId])
+  @@map("ratings")
+}
+
+model Report {
+  id              String       @id @default(uuid()) @db.Uuid
+  reporterId      String       @map("reporter_id") @db.Uuid
+  reportedUserId  String       @map("reported_user_id") @db.Uuid
+  sessionId       String?      @map("session_id") @db.Uuid
+  reason          String
+  description     String?
+  status          ReportStatus @default(open)
+  resolvedBy      String?      @map("resolved_by") @db.Uuid
+  resolvedAt      DateTime?    @map("resolved_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  reporter     User    @relation("ReporterReports", fields: [reporterId], references: [id])
+  reportedUser User    @relation("ReportedUserReports", fields: [reportedUserId], references: [id])
+  session      Session? @relation(fields: [sessionId], references: [id])
+  resolver     User?   @relation("ReportResolver", fields: [resolvedBy], references: [id])
+
+  @@index([status, createdAt])
+  @@map("reports")
+}
+
+model Block {
+  id        String   @id @default(uuid()) @db.Uuid
+  blockerId String   @map("blocker_id") @db.Uuid
+  blockedId String   @map("blocked_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("BlockerBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockedBlocks", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
+}
+
+model AdminAction {
+  id         String   @id @default(uuid()) @db.Uuid
+  adminId    String   @map("admin_id") @db.Uuid
+  actionType String   @map("action_type")
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([targetType, targetId])
+  @@map("admin_actions")
+}
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  channel   NotificationChannel
+  title     String
+  body      String
+  dataJson  Json?               @map("data_json")
+  readAt    DateTime?           @map("read_at")
+  createdAt DateTime            @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, createdAt])
+  @@map("audit_logs")
+}
+
+model GroupChatRoom {
+  id          String              @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  status      GroupChatRoomStatus @default(open)
+  createdById String              @map("created_by_id") @db.Uuid
+  closedAt    DateTime?           @map("closed_at")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  createdBy    User                   @relation("GroupRoomCreator", fields: [createdById], references: [id])
+  participants GroupChatParticipant[]
+  messages     GroupChatMessage[]
+  joinRequests GroupChatJoinRequest[]
+
+  @@map("group_chat_rooms")
+}
+
+model GroupChatJoinRequest {
+  id           String                     @id @default(uuid()) @db.Uuid
+  roomId       String                     @map("room_id") @db.Uuid
+  userId       String                     @map("user_id") @db.Uuid
+  status       GroupChatJoinRequestStatus   @default(pending)
+  message      String?                    @db.VarChar(500)
+  createdAt    DateTime                   @default(now()) @map("created_at")
+  updatedAt    DateTime                   @updatedAt @map("updated_at")
+  reviewedAt   DateTime?                  @map("reviewed_at")
+  reviewedById String?                    @map("reviewed_by_id") @db.Uuid
+
+  room       GroupChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  requester  User          @relation("GroupChatJoinRequester", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?         @relation("GroupChatJoinReviewer", fields: [reviewedById], references: [id])
+
+  @@index([roomId, status])
+  @@index([userId, status])
+  @@map("group_chat_join_requests")
+}
+
+model GroupChatParticipant {
+  id             String                   @id @default(uuid()) @db.Uuid
+  roomId         String                   @map("room_id") @db.Uuid
+  userId         String                   @map("user_id") @db.Uuid
+  role           GroupChatParticipantRole
+  joinedAt       DateTime                 @default(now()) @map("joined_at")
+  leftAt         DateTime?                @map("left_at")
+  removedReason  String?                  @map("removed_reason")
+
+  room GroupChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([userId, leftAt])
+  @@map("group_chat_participants")
+}
+
+model GroupChatMessage {
+  id                   String      @id @default(uuid()) @db.Uuid
+  roomId               String      @map("room_id") @db.Uuid
+  senderId             String      @map("sender_id") @db.Uuid
+  messageType          MessageType @default(text) @map("message_type")
+  content              String?
+  imageUrl             String?     @map("image_url")
+  clientMessageId      String?     @map("client_message_id")
+  deliveredAt          DateTime?   @map("delivered_at")
+  readAt               DateTime?   @map("read_at")
+  hiddenByModeration   Boolean     @default(false) @map("hidden_by_moderation")
+  createdAt            DateTime    @default(now()) @map("created_at")
+
+  room   GroupChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User          @relation("GroupChatMessageSender", fields: [senderId], references: [id])
+
+  @@unique([roomId, clientMessageId])
+  @@index([roomId, createdAt])
+  @@map("group_chat_messages")
+}

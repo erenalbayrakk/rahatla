@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "661051223756",
+    "project_id": "rahatla-4ac4c",
+    "storage_bucket": "rahatla-4ac4c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:661051223756:android:2af9bf2df5d1a56d825c69",
+        "android_client_info": {
+          "package_name": "com.rahatla.rahatla_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWun1ZWsGQpqGyBFXNoEoEM96yKIPCKy8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

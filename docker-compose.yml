@@ -1,0 +1,89 @@
+# Rahatla — Docker
+#
+# Postgres + API (Nest imajı, migrate deploy + production build):
+#   docker compose up -d --build
+#
+# Prisma Studio (aynı API imajı, veritabanı arayüzü):
+#   http://localhost:${PRISMA_STUDIO_PORT:-5555}  (API ile birlikte ayağa kalkar)
+#
+# Sadece PostgreSQL:
+#   docker compose up -d postgres
+#
+# Ortam: proje kökünde `.env` (bkz. `.env.example`).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rahatla-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rahatla}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rahatla_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-rahatla}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - rahatla_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rahatla} -d ${POSTGRES_DB:-rahatla}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: rahatla-api
+    restart: unless-stopped
+    # Proje kökündeki rahatla-secret.json → konteyner içi yol (FCM)
+    volumes:
+      - ./rahatla-secret.json:/app/rahatla-secret.json:ro
+    ports:
+      - "${API_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rahatla}:${POSTGRES_PASSWORD:-rahatla_dev}@postgres:5432/${POSTGRES_DB:-rahatla}
+      JWT_SECRET: ${JWT_SECRET:-rahatla-dev-jwt-secret-change-in-production-min-32}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION:-auto}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      APP_PUBLIC_API_URL: ${APP_PUBLIC_API_URL:-http://127.0.0.1:3000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-Rahatla <no-reply@localhost>}
+      WALLET_GIFT_FEE_BPS: ${WALLET_GIFT_FEE_BPS:-1000}
+      WALLET_MIN_PAYOUT_MINOR: ${WALLET_MIN_PAYOUT_MINOR:-10000}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      # Mount: ./rahatla-secret.json : /app/rahatla-secret.json
+      FIREBASE_SERVICE_ACCOUNT_PATH: /app/rahatla-secret.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # API imajını yeniden kullanır; migrate + Nest çalıştırmaz, yalnızca Prisma Studio.
+  prisma-studio:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: rahatla-prisma-studio
+    restart: unless-stopped
+    entrypoint:
+      ["npx", "prisma", "studio", "--port", "5555", "--browser", "none"]
+    ports:
+      - "${PRISMA_STUDIO_PORT:-5555}:5555"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rahatla}:${POSTGRES_PASSWORD:-rahatla_dev}@postgres:5432/${POSTGRES_DB:-rahatla}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  rahatla_pgdata:
